@@ -15,6 +15,17 @@ Outside of data, I've spent 5+ years in management and 7+ years training and men
 
 ---
 
+## Publication
+
+**"Your Body, Their Data: Reproductive Surveillance and the Long Project of American Control"**  
+*The Public Purpose Journal*, Vol. XXIV, Spring 2026 · American University School of Public Affairs
+
+Peer-reviewed policy analysis arguing that the weaponization of reproductive health data after *Dobbs v. Jackson Women's Health Organization* is not a technological anomaly but the modern manifestation of a centuries-old project to regulate bodily autonomy — tracing a continuous line from antebellum reproductive control and eugenic sterilization to today's unregulated data broker industry and algorithmic inference. Analyzes case law, criminal prosecutions (including *Nebraska v. Burgess* and ICE smartwatch tracking of pregnant immigrants), and technical literature on re-identification risk. Draws on Foucauldian biopolitics, Dorothy Roberts's critical race feminist framework, and emerging digital privacy scholarship. Proposes the **Digital Bodyguard Act**: a prohibited-by-default federal standard for sensitive health data with FTC enforcement and a private right of action.
+
+This paper grew directly out of work in **GOVT-641: Politics of Mass Communication** and **GOVT-620: Applied Politics & American Public Policy** — the combination of media framing theory and policy process analysis shaped both the argument and the proposal.
+
+---
+
 ## Coursework at American University
 
 All courses below are from my official AU transcript. Courses in Fall 2026 are currently in progress.

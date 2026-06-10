@@ -20,6 +20,15 @@ B.A. Political Science (Pre-Law, International Relations, International Security
 
 ---
 
+## 📄 Publications
+
+**"Your Body, Their Data: Reproductive Surveillance and the Long Project of American Control"**  
+*The Public Purpose Journal*, Vol. XXIV, Spring 2026 · American University School of Public Affairs
+
+Argues that the weaponization of reproductive health data after *Dobbs v. Jackson Women's Health Organization* is not a technological anomaly but the modern manifestation of a centuries-old project of bodily control — tracing a continuous line from *partus sequitur ventrem* and eugenic sterilization to algorithmic inference and the unregulated data broker industry. Analyzes case law, criminal prosecutions, and technical literature on re-identification risk, and proposes the **Digital Bodyguard Act** as a necessary but insufficient intervention. Draws on Foucauldian biopolitics, critical race and feminist theory, and digital privacy scholarship.
+
+---
+
 ## 🎓 Graduate Coursework (American University)
 
 | Course | Topic |
