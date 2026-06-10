@@ -1,0 +1,215 @@
+---
+title: "STAT627 Homework 4"
+author: "Alyssa Langmeyer"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: true
+    toc_depth: 2
+    number_sections: false
+  word_document:
+    toc: true
+    toc_depth: 2
+    number_sections: false
+  html_document:
+    toc: true
+    toc_depth: '2'
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+```{r}
+library(tidyverse)
+library(ISLR2)
+```
+
+
+# 1 Ex.4.8.13.(with modification) Stock Market Prediction, Part 2. Logistic Regression (p.192, 10 pts).
+We want to predict the behavior of the stock market in the following week. The Weekly data set, (from the
+{ISLR2} package), contains 1,089 observations with the following 9 variables.
+• Year: The year that the observation was recorded
+• Lag1: Percentage return for previous week
+• Lag2: Percentage return for 2 weeks previous
+• Lag3: Percentage return for 3 weeks previous
+• Lag4: Percentage return for 4 weeks previous
+• Lag5: Percentage return for 5 weeks previous
+• Volume: Volume of shares traded (average number of daily shares traded in billions)
+• Today: Percentage return for this week
+• Direction: A factor with levels Down and Up indicating whether the market had a positive or negative
+return on a given week
+
+## (a) Perform a logistic regression with Directionas the response and the five lag variables plus Volume as predictors. Do any of the predictors appear to be statistically significant? If so, which ones? 
+```{r}
+model_1a <- glm(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume,
+               data = Weekly,
+               family = binomial)
+summary(model_1a)
+```
+  After fitting the model, Lag2 is the only predictor with a p-value less tha 0.05. This indicates that the return percentage from 2 weeks ago is the only statistically significant relationship. 
+
+## (b) Compute the confusion matrix and overall fraction of correct predictions. Explain what the confusion matrix is telling you about the types of mistakes made by the logistic regression model.
+```{r}
+prob_pred_1a<-predict(model_1a,type="response")
+predicted_direction<-ifelse(prob_pred_1a>=0.5,"Up","Down")
+predicted_direction<-factor(predicted_direction, levels=c("Down","Up"))
+
+conf_matrix_1b<-table(predicted_direction,Weekly$Direction)
+conf_matrix_1b
+
+correct_predictions <- conf_matrix_1b["Down", "Down"] + conf_matrix_1b["Up", "Up"]
+total_observations <- sum(conf_matrix_1b)
+accuracy_1b <- correct_predictions / total_observations
+accuracy_1b
+```
+  The total accuracy of the model is 56.1%. but the confusion matrix shows that the model is heavily biased towards predicting 'Up'. This is evident from the 430 false negatives compared to the 48 false positives. The model would be of limited practical use as such.
+  
+
+## (c) Fit a logistic regression model with Lag2 as the only predictor using as training data the period from 1990 to 2008. Compute the confusion matrix and the overall fraction of correct predictions for the held out test data (that is the data from 2009, and 2010). How does it compare to before? What does that suggest?
+```{r}
+train_data <- subset(Weekly, Year >= 1990 & Year <= 2008)
+test_data <- subset(Weekly, Year >= 2009 & Year <= 2010)
+test_data$Direction <- factor(test_data$Direction, levels = c("Down", "Up"))
+
+model_1c <- glm(Direction ~ Lag2, 
+                data = train_data, 
+                family = binomial)
+
+test_probs <- predict(model_1c, 
+                      newdata = test_data, 
+                      type = "response")
+
+test_preds <- ifelse(test_probs >= 0.5, "Up", "Down")
+test_preds <- factor(test_preds, levels = c("Down", "Up"))
+
+conf_matrix_1c <- table(test_preds, test_data$Direction)
+conf_matrix_1c
+
+test_accuracy <- mean(test_preds == test_data$Direction)
+test_accuracy
+```
+The total accuracy of the model in 1b is 56.1% and the total accuracy of the model in 1c is 62.5%. The simpler model using just Lag2 as a predictor and tested on unseen test data had a higher accuracy rate, indicating that the first model was likely over fitting the training data. The simpler Lag2 only model, while less accurate on the training data it was built on, actually generalizes better to new, unseen data. This makes it a more reliable and useful model for prediction. 
+
+## (d) Plot an ROC curve for the logistic regression on the test data from (c), using different probability thresholds and add an diagonal line for FPR = TPR. Interpret the plot in terms of how useful the model might be?
+```{r}
+library(pROC)
+roc_obj <- roc(response = test_data$Direction, 
+               predictor = test_probs)
+
+plot(roc_obj, print.auc = TRUE, 
+     main = "ROC Curve for Logistic Regression (Test Data)",
+     legacy.axes = TRUE)
+abline(a = 0, b = 1, lty = 2, col = "red")
+```
+  The Area Under the Curve is 0.454, which is below 0.5, implying the model doesn't have predictive power better than random guessing. 
+
+# 2 Ex.4.8.5, LDA v QDA (p.191, 4 pts)
+
+## (a) If the Bayes decision boundary is linear, do we expect LDA or QDA to perform better on the training set? On the test set?
+If the Bayes decision boundary is linear, we expect QDA to perform better on the training set and LDA to perform better on the test set. As QDA has better flexibility, that allows it to fit the sample data more closely. On the test set, QDA's extra flexibility could lead to over fitting on the training data data, which would result in higher variance and worse perforamce on new data
+
+## (b) Compare the expected performance of LDA and QDA on the training set and then on the test set if the Bayes decision boundary is non-linear.
+If the Bayes decision boundary is non-linear, we expect QDA to perform better than LDA on the training set, as its greater flexibility allows it to fit the non linear pattern in the training data more closely. On the test set, it depends on the sample size, as with a large sample size, we expect QDA to perform better but LDA would perform better with a smaller sample size. 
+
+## (c) In general, as the sample size n increases, do we expect the test prediction accuracy of QDA relative to LDA to improve, decline, or be unchanged? Why?
+As the sample size n increases, we expect the test prediction accuracy of the QDA to improve because QDA is more flexible buyt requires estimating more parameters than LDA does. Witha small sample size n, the parameter estimates for QDA are more imprecise, causing higher variance and often worse performance than LDA. A larger sample n causes the estimates for the parameter to become more precise and stable, reducing QDAs variance and allowing greater flexibility.
+
+## (d) True or False: If the Bayes decision boundary for a given problem is linear, we will probably achieve a superior test error rate using QDA rather than LDA because QDA is flexible enough to model a linear decision boundary. Justify your answer.
+This is false because of the bias-variance trade off. QDA in this situation would have higher variance, be likely to be overfit to the data, have unnecessary complexity. As the the boundary is linear, there is no need to use a more powerful, complex tool like QDA for a simple job when LDA is available. 
+
+# 3 Ex.4.8.7. Non-uniform Prior. Predicting Issuance of a Stock Dividend (p.191, 4 pts)
+Suppose that we wish to predict whether a given stock will issue a dividend this year (“Yes” or “No”) based
+on X, last year’s percent profit. We examine a large number of companies and discover:
+• The mean value of percent profit X for companies that issued a dividend was  ̄x1 = 10, while the mean
+for those that didn’t was  ̄x2 = 0.
+• The variance of X for these two sets of companies was σ2 = 36.
+• 80% of companies issued dividends.
+
+## Assuming that X follows a Normal distribution, predict the probability that a company will issue a dividend this year given that its percentage profit was X = 4 last year.
+
+Hint: Recall that the density function for a Normal random variable is ___. You will need to use the Bayes theorem. Also, use R function dnorm(x, mean, sd) to compute the pdf (f (x)) of Normal distribution
+
+```{r}
+mean_yes <- 10
+mean_no <- 0
+sd <- 6
+prior_yes <- 0.80
+prior_no <- 0.20
+x <- 4
+
+likelihood_yes <- dnorm(x, mean = mean_yes, sd = sd)
+likelihood_no <- dnorm(x, mean = mean_no, sd = sd)
+
+numerator_yes <- likelihood_yes * prior_yes
+total_probability <- (likelihood_yes * prior_yes) + (likelihood_no * prior_no)
+
+posterior_prob_yes <- numerator_yes / total_probability
+
+posterior_prob_yes
+```
+The probability that a company will issue a dividend this year, given that its percentage profit was X=4 last year, is approximately 75.18%
+
+# 4 Ex.4.8.13.(with modfication) Stock Market Prediction, Part 3. LDA, QDA and Summary (7 pts)
+We want to continue with trying to predict the behavior of the stock market in the following week. We
+computed a KNN estimate and a Logistic regression estimate already. We will now look at LDA and QDA
+using the {MASS} package and compare across these prediction methods.
+The Weekly data set, (from the {ISLR2} package), contains 1,089 observations with the following 9 variables.
+• Year: The year that the observation was recorded
+• Lag1: Percentage return for previous week
+• Lag2: Percentage return for 2 weeks previous
+• Lag3: Percentage return for 3 weeks previous
+• Lag4: Percentage return for 4 weeks previous
+• Lag5: Percentage return for 5 weeks previous
+Volume: Volume of shares traded (average number of daily shares traded in billions)
+• Today: Percentage return for this week
+• Direction: A factor with levels Down and Up indicating whether the market had a positive or negative
+return on a given week
+
+## (a) Use LDA with a training data period from 1990 to 2008, with Lag2 as the only predictor. Compute the confusion matrix and the overall fraction of correct predictions for the held-out data (that is, the data from 2009 and 2010).
+```{r}
+library(MASS)
+lda_fit <- lda(Direction ~ Lag2, data = train_data)
+print(lda_fit)
+```
+```{r}
+lda_pred <- predict(lda_fit, newdata = test_data)
+lda_class <- lda_pred$class
+
+conf_matrix_4a <- table(lda_class, test_data$Direction)
+conf_matrix_4a
+```
+```{r}
+lda_accuracy <- mean(lda_class == test_data$Direction)
+lda_accuracy
+```
+The accuracy rate of this model is 62.5%
+
+## (b) Repeat (a) using QDA.
+```{r}
+qda_fit <- qda(Direction ~ Lag2, data = train_data)
+print(qda_fit)
+```
+```{r}
+qda_pred <- predict(qda_fit, newdata = test_data)
+qda_class <- qda_pred$class
+conf_matrix_4b <- table(qda_class, test_data$Direction)
+conf_matrix_4b
+```
+```{r}
+qda_accuracy <- mean(qda_class == test_data$Direction)
+qda_accuracy
+```
+The accuracy rate of this model is 58.65%
+
+## (c) Using the results from the previous questions (Stock Market Predictions in HW 3 and HW 4), compare the correct classification rates on the testing data obtained from the 4 methods: KNN (in HW 3), Logistic regression, LDA and QDA. Recommend one or more methods. Explain your rationale.
+The correct classification rates: 
+- K-Nearest Neighbors (KNN): 0.5076 
+- Logistic Regression: 0.625 
+- Linear Discriminant Analysis (LDA): 0.625 
+- Quadratic Discriminant Analysis (QDA): 0.5865 
+
+Based on these rates, I recommend using either Logistic Regression or LDA.Both Logistic Regression and LDA achieved the highest prediction accuracy (62.5%) on the held-out test data, significantly outperforming both KNN and QDA.

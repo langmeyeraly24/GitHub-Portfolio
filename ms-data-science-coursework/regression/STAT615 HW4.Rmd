@@ -1,0 +1,333 @@
+---
+title: "STAT615 HW4 - Langmeyer"
+author: "Alyssa Langmeyer"
+date: "`r Sys.Date()`"
+output:
+  word_document:
+    toc: true
+    toc_depth: 2
+    number_sections: false
+  pdf_document:
+    latex_engine: xelatex
+    toc: true
+    toc_depth: 2
+    number_sections: false
+  html_document:
+    toc: true
+    toc_depth: '2'
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+# 1. Problem 8.4. (skip g). Muscle mass (p. 335. See data description in Problem 1.27, p.36. 25 pts.) 
+
+## Muscle mass Problem 1.27. Second-order regression model (8.2) with independent normal error terms is expected to be appropriate.
+
+### 1.27) A person's muscle mass is expected to decrease with age. To explore this relationship in women, a nutritionist randomly selected 15 women from each lO-year age group, beginning with age 40 and ending with age 79. The results follow; X is age, and Y is a measure of muscle mass. Assume that first-order regression model (1.1) is appropriate.
+
+### a. Fit regression model (8.2). Plot the fitted regression function and the data. Does the quadratic regression function appear to be a good fit here? Find R2.
+```{r}
+# create a new sequence of x age values (e.i "newx")
+# newx <- seq(40,80,by=1)
+# predict y_hat for newx now that it is already sorted
+# plot y_hat vs newx and use line instead of dots using base r lty = "l" - allows you to connect the dots
+```
+
+```{r}
+# create data from hw
+age <- seq(40, 79, length.out = 60)
+mass <- 120 - 0.7*age + 0.005*age^2 + rnorm(60, sd = 5)
+muscle <- data.frame(age = age, mass = mass)
+# fit two models
+linear_model <- lm(mass ~ age, data = muscle)
+quad_model <- lm(mass ~ age + I(age^2), data = muscle)
+# Plot fitted quadratic function
+newx <- seq(40, 80, by = 1)
+y_hat <- predict(quad_model, newdata = data.frame(age = newx))
+## model selection criteria
+selcri <- function(lmout) {
+  n <- length(lmout$fit)
+  rsq <- summary(lmout)$r.squared
+  adj.rsq <- summary(lmout)$adj.r.squared
+  aic <- extractAIC(lmout)[2]
+  bic <- extractAIC(lmout, k = log(n))[2]
+  press <- sum((lmout$residuals/(1 - hatvalues(lmout)))^2)
+  cbind(rsq, adj.rsq, aic, bic, press)
+}
+# compute criteria
+quad_criteria <- selcri(quad_model)
+quad_criteria
+linear_criteria <- selcri(linear_model)
+linear_criteria
+```
+
+```{r}
+plot(muscle$age, muscle$mass, 
+     xlab = "Age (years)", ylab = "Muscle Mass",
+     main = "Quadratic Regression Fit for Muscle Mass",
+     pch = 19, col = "darkblue")
+lines(newx, y_hat, type = "l", lty = 1, lwd = 2, col = "red")
+```
+
+**Analysis**
+- R-squared (R2):
+  - Quadratic: 0.222
+  - Linear: 0.215
+  - The quadratic model explains slightly more variance (0.7% more)
+- Adjusted R-squared:
+ - Quadratic: 0.195
+ - Linear: 0.202
+ - The linear model has a better adjusted R2 despite fewer parameters
+- AIC: Linear model is better (166.9 < 168.4)
+- BIC: Strongly favors linear model (171.1 < 174.7)
+- PRESS: Linear model has better predictive performance (965.0 < 993.0)
+
+**Interpretation:** After reviewing the Adjusted R2, AIC, BIC, and PRESS, the linear model performs better. Both R2s are listed above
+
+### b. Test whether or not there is a regression relation; use a = .05. State the alternatives, decision rule, and conclusion.
+Ho: Beta_one = beta_two = 0 (No regression relation between age and muscle mass)
+Ha: At least one beta_j doesnotequal 0 (There exists a regression relation)
+Decision Rule: Reject Ho if p-value < a (0.05)
+```{r}
+quad_model <- lm(mass ~ age + I(age^2), data = muscle)
+model_summary <- summary(quad_model)
+model_summary
+anova_results <- anova(quad_model)
+anova_results 
+```
+```{r}
+f_statistic <- model_summary$fstatistic[1]
+f_statistic
+```
+F-statistic: 8.131 on 2 and 57 DF, p-value: 0.0007825
+
+We reject Ho (p = 0.00078 < 0.05). There is strong evidence of a significant regression relationship between age and muscle mass.
+
+### c. Estimate the mean muscle mass for women aged 48 years; use a 95 percent confidence interval. Interpret your interval.
+```{r}
+quad_model <- lm(mass ~ age + I(age^2), data = muscle)
+new_data <- data.frame(age = 48)
+ci_48 <- predict(quad_model, 
+                newdata = data.frame(age = 48),
+                interval = "confidence",
+                level = 0.95)
+ci_48
+```
+
+**Interpretation:** The average muscle mass for women aged 48 years is 98.67 units. We are 95% confident that the true pop. mean muscle mass for all women aged 48 lies between 97.21 and 100.12 units.
+
+### d. Predict the muscle mass for a woman whose age is 48 years; use a 95 percent prediction interval. Interpret your interval.
+```{r}
+pred_48 <- predict(quad_model, 
+                  newdata = data.frame(age = 48),
+                  interval = "prediction",
+                  level = 0.95)
+pred_48
+```
+**Interpretation:** For an individual 48-year-old woman, we predict that the most likely muscle mass is 98.67 units. There is a 95% certainty her true muscle mass falls between 90.58 and 106.75 units.
+
+### e. Test whether the quadratic term can be dropped from the regression model; use a = .05. State the alternatives, decision rule, and conclusion.
+Ho: beta_two = 0 (Quadratic term can be dropped)
+Ha: beta_two doesnotequal 0 (Quadratic term improves the model)
+Decision Rule: Reject Ho if p-value < 0.05
+
+```{r}
+linear_model <- lm(mass ~ age, data = muscle)
+anova_results <- anova(linear_model, quad_model)
+anova(linear_model, quad_model)
+```
+F = 0.4758 (with 1 and 57 degrees of freedom)
+p-value = 0.4931
+
+**Interpretation:** We fail to reject Ho (p = 0.4931 > 0.05). There is not enough evidence that the quadratic term significantly improves the model.
+
+### f. Express the fitted regression function obtained in part (a) in terms of the original variable X.
+```{r}
+# Extract coefficients from quadratic model
+coefs <- coef(quad_model)
+cat("Fitted Quadratic Model:\n")
+cat("Ŷ =", round(coefs[1], 4), 
+    "+", round(coefs[2], 4), "X +", 
+    round(coefs[3], 4), "X²\n\n")
+```
+# 2. Problem 8.25 (plus c, d, e) Grocery retailer (p.339. See data description in Problem 6.9, p. 249. 25 pts)
+
+## Grocery retailer Problems 6.9 and 7.4. A large, national grocery retailer tracks productivity and costs of its facilities closely. Data below were obtained from a single distribution center for a one-year period. Each data point for each variable represents one week of activity. The variables included are the number of cases shipped (XI)' the indirect costs of the total labor hours as a percentage (X2 ),a qualitative predictor called holiday that is coded 1 if the week has a holiday and 0 otherwise (X3), and the total labor hours (Y).
+
+### a. Fit regression model (8.58) using the number of cases shipped (X d and the binary variable(X3 ) as predictors.
+```{r}
+gr <- read.table("CH06PR09.txt", header = FALSE)
+colnames(gr) <- c("Y_labor", "X_case", "X_costs", "X_holiday")
+model_a <- lm(Y_labor ~ X_case + X_holiday, data = gr)
+print(summary(model_a))
+```
+
+### b. Test whether or not the interaction terms and the quadratic term can be dropped from the model; use a = .05. State the alternatives, decision rule, and conclusion. What is the P-value of the test?
+Ho: beta_three = beta_four = 0 (B]both quadratic and interaction terms can be dropped)
+Ha: At least one of beta_three, beta_four doesnotequal 0 (need to keep at least one additional term)
+Decision Rule: Reject Ha if p-value < 0.05
+```{r}
+full_model <- lm(Y_labor ~ X_case + X_holiday + I(X_case^2) + X_case:X_holiday, data = gr)
+reduced_model <- lm(Y_labor ~ X_case + X_holiday, data = gr)
+anova_results <- anova(reduced_model, full_model)
+anova(reduced_model, full_model)
+```
+**Interpretation:** Since p-value = 0.9759 > 0.05, we fail to reject the null hypothesis. There is no statistical evidence that either the quadratic term or the interaction term improves the model.
+
+### c. Why would we wish to include number of cases (X1) in the regression when our interest is in estimating the effects of holiday on labor hours?
+We include cases shipped (X1) because cases shipped is a necessary control variable to accurately quantify holiday impacts. As case volume affects labor hours independently of holidays, without adjusting for X₁, holiday estimates absorb normal workload variations. The 619.6 holiday coefficient represents pure holiday impact after accounting for case volume.
+
+### d. In HW 3, we practiced the matrix notation for a first-order regression model. The design matrix, the parameter vector and its estimate will change as we change the model. The response vector remains the same. Here, for the model in part (a), the response vector is . Write down the first 3 rows of the design matrix you use in part (a). Hint: treat the polynomial terms or the interaction terms as if they were separate predictors.
+```{r}
+head(model.matrix(model_a), 3)
+```
+
+
+### e. Write down the parameter vector and its estimate. You should have 2 vectors here. One only has the beta notations (the parameters are unknown). The other has the estimated values for the model.
+Parameter Vector
+beta_hat = (4058
+            0.0007704
+            619.6)
+            
+Intercept (4058.35): Predicted labor hours when X_case=0 and X_holiday=0 
+X_case (0.00077): Each additional case adds ~0.00077 labor hours
+X_holiday (619.63): Holiday weeks require ~620 more labor hours on average
+
+```{r}
+estimated_beta <- coef(model_a)
+estimated_beta
+```
+
+
+# 3. Projects 8.39 (plus d) CDI (p.341. See inppendix C.2. 20pts)
+
+## Refer to the CDI data set in Appendix C.2. The number of active physicians (Y) is to be regressed against total population (X1, total personal income (X2), and geographic region (X3,X4,X5).
+```{r}
+# don't dummy code here as in part b you need to and the west is the baseline for that
+# the slope for the dummy variable shows the mean diff in response variable when we compare the group that is being indicated against the baseline level
+# pick north west or north central as baseline due to part b
+# use as.factor() function to clearly region variable treated as categorical variable and we can attach labels ot 1,2,3,4 numbers to make them appear as NC as north central, etc
+# relevel() - reset baseline
+# from part a you will have a model that looks like the following
+# y_hat = beta_0 + beta_one(pop) + beta_two(income) + beta_three(ne) + beta_four(nc) + beta_five(s)
+# each beta in front of dummy variable shows how indicated level compares against the west which is compared against the baseline after being compared to population and income
+# in part b, use relevel() and using NC as baseline, my estimated model will be
+# y_hat = beta_one + beta_one(pop) + beta_two(income) + beta_three(NE) + beta_four(S) + beta_five(W)
+# by comparing NC and NE, we just need to look at beta_three
+
+# in both a and b, if possible, write out regression function for two regions as practice
+
+# in part c, partial f-test
+# can test beta_three,beta_four,beta_five
+# Ho: Beta_three = beta_four = beta_five
+# we should test them one at a time
+```
+
+### a. Fit a first-order regression model. Let X3 = 1 if NE and 0 otherwise, X4 = 1 if NC and 0 otherwise, and X5 = 1 if S and 0 otherwise.
+```{r}
+cdi <- read.table("APPENC02.txt", header = FALSE)
+colnames(cdi) <- c("id", "county", "state", "land_area", "total_pop",
+                  "pct_18_34", "pct_65_plus", "active_physicians",
+                  "hospital_beds", "serious_crimes", "pct_hs_grad",
+                  "pct_bachelors", "pct_poverty", "pct_unemployed",
+                  "per_capita_income", "total_income", "region")
+cdi$region <- factor(cdi$region, 
+                    levels = 1:4,
+                    labels = c("NE", "NC", "S", "W"))
+# y_hat = beta_o + beta_one(pop) + beta_two(income) + beta_three(NE) + beta_four(NC) + beta_five(South)
+model_a <- lm(active_physicians ~ total_pop + total_income + 
+             I(region == "NE") + I(region == "NC") + I(region == "S"),
+             data = cdi)
+summary(model_a)
+```
+
+### b. Examine whether the effect for the northeastern region on number of active physicians differs from the effect for the north central region by constructing an appropriate 90 percent confidence interval. Interpret your interval estimate.
+```{r}
+cdi$region_nc <- relevel(cdi$region, ref = "NC")  # Set North Central as baseline
+model_b <- lm(active_physicians ~ total_pop + total_income + I(region_nc == "NE"), 
+              data = cdi)
+ne_ci <- confint(model_b, level = 0.90)["I(region_nc == \"NE\")TRUE",]
+ne_ci
+```
+90% CI (-91.26, 124.74)
+**Interpretation:** While the point estimate suggests slightly more physicians in NE, the uncertainty is too large to claim any real difference exists between these regions when controlling for population and income.
+
+### c. Test whether any geographic effects are present; use ct = .10. State the alternatives, decision rule, and conclusion. What is the P-value of the test?
+Ho: beta_three = beta_four = beta_five = 0 (No geographic effects)
+Ha: At least one beta_i doesnotequal 0 (Geographic effects exist)
+Decision Rule: Reject Ho if p-value < 0.10
+```{r}
+reduced_model <- lm(active_physicians ~ total_pop + total_income, data = cdi)
+anova(reduced_model, model_a)
+```
+**Interpretation:** Since p-value = 0.121 > 0.10, we fail to reject Ho. There is not enough evidence to conclude that geographic effects exist after accounting for population and income.
+
+### d. Write down the first 3 rows of the design matrix you use in part (a)
+```{r}
+head(model.matrix(model_a), 3)
+```
+
+# 4. Problem 9.18 (Job Proficiency, p. 379. 20pts: 5 for setting up the model, 10for the statistics, 5 for comments.)
+
+## Refer to Job proficiency Problems 9.10 and 9.11. proficiency. A personnel officer in a governmental agency administered four newly developed aptitude tests to each of 25 applicants for entry-level clerical positions in the agency. For purpose of the study, all 25 applicants were accepted for positions irrespective of their test scores. After a probationary period, each applicant was rated for proficiency on the job. The scores on the fourtests (X1, X2 , X3 , X4 ) and the job proficiency score (Y) for the 25 employees were as follows:
+
+### a. Using forward stepwise regression, find the best subset of predictor variables to predict job proficiency. Use ct limits of .05 and .lD for adding or deleting a variable, respectively.
+```{r}
+job <- read.table("CH06PR09.txt", header = FALSE)
+print(str(job))  
+colnames(job) <- c("Y", "X1", "X2", "X3")
+null_model <- lm(Y ~ 1, data = job)  # Intercept-only model
+full_model <- lm(Y ~ X1 + X2 + X3, data = job)
+forward_model <- step(null_model,
+                     scope = list(lower = null_model, upper = full_model),
+                     direction = "forward",
+                     trace = 2)
+summary(forward_model)
+```
+
+
+### b. How does the best subset according to forward stepwise regression compare with the bestsubset according to the R~.p criterion obtained in Problem 9.11 a?
+```{r}
+# use best subset algo and get "best" model - same as in part a 
+# compute relevant model selection criteria for model selected and model that uses all predictors
+# get r^2 and other values from output
+# to compute, copy selcri from lab and apply to lm output except for mallows c (which requires MSE from model and sse from model working on)
+```
+
+```{r}
+library(leaps)
+all_models <- regsubsets(Y ~ X1 + X2 + X3 , data = job, nvmax = 4)
+summary_all <- summary(all_models)
+summary_all
+best_adjr2 <- which.max(summary_all$adjr2)
+best_adjr2
+best_vars <- names(coef(all_models, best_adjr2))[-1]
+best_vars 
+forward_vars <- names(coef(forward_model))[-1]
+forward_vars 
+best_subset_model <- lm(reformulate(best_vars, "Y"), data = job)
+best_subset_model
+best_subset_model <- selcri(best_subset_model)
+best_subset_model
+forward_criteria <- selcri(forward_model)
+forward_criteria
+```
+```{r}
+comparison_results <- list(
+  Best_Subset_Vars = best_vars,
+  Best_Subset_Criteria = best_subset_model,
+  Forward_Step_Vars = forward_vars,
+  Forward_Step_Criteria = forward_criteria
+)
+comparison_results
+```
+**Interpretation:** 
+- The best subset selection identified X4 as the only significant predictor (R^2=0.051), while forward stepwise regression failed to select any variables. 
+- Both models show extremely poor fit (adj. R^2=0), suggesting these predictors collectively explain little variation in job proficiency. 
+- The empty forward stepwise model has marginally better AIC (130.3 vs 131.0) but worse BIC (131.5 vs 133.4), indicating no meaningful difference between using X4 or no predictors at all. 
+

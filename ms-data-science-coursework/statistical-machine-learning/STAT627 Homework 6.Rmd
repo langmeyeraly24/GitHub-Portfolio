@@ -1,0 +1,194 @@
+---
+title: "STAT627 Homework 6"
+author: "Alyssa Langmeyer"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: true
+    toc_depth: 2
+    number_sections: false
+  word_document:
+    toc: true
+    toc_depth: 2
+    number_sections: false
+  html_document:
+    toc: true
+    toc_depth: '2'
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1 Basses and sopranos (Jackknife) (6 pts)
+An acoustic studio needs to estimate the range of voice fundamental frequencies that an adult singer can produce. 
+
+A sample of n = 10 recordings contains frequencies 102, 115, 127, 127, 162, 180, 184, 205, 239, 240.
+
+## (a) Manually compute (by hand) the jackknife estimator of the population lowest fundamental frequency of a human voice. Compare your results with the natural range of human voice frequencies. (Use Google or Wiki.)
+Data: 102, 115, 127, 127, 162, 180, 184, 205, 239, 240
+
+n = 10
+
+parameter of interest = min(sample) = 102
+
+Leave out value and resulting jackknife replicate
+*(i wrote out the full sample in my handwritten notes, not retyping)*
+
+- 102, 115
+
+- 115, 102
+
+- 127, 102
+
+- 127, 102
+
+- 162, 102
+
+- 180, 102
+
+- 184, 102
+
+- 205, 102
+
+- 239, 102
+
+- 240, 102
+
+
+Average replicates = 115 + 102 + 102 + 102 + 102 + 102 + 102 + 102 + 102 + 102 / 10
+
+average replicates  = 1033 / 10
+
+average replicates = 103.3
+
+
+Jackknife estimator = (10 * 102) − (9 × 103.3)
+
+Jackknife estimator = 90.3
+
+The jackknife estimate for the population's lowest fundamental frequency is 90.3 Hz, which falls within the bass range of (82-330Hz). Bass is the lowest range in music, most typically sang by the deepest of male speakers.
+
+## (b) Use software to confirm your result.
+```{r}
+library(bootstrap)
+
+frequency_sample <- c(102, 115, 127, 127, 162, 180, 184, 205, 239, 240)
+
+min_function <- function(x) min(x, na.rm = TRUE)
+
+jk_result <- jackknife(
+  x = frequency_sample, 
+  theta = min_function)
+
+print(jk_result)
+```
+```{r}
+n <- length(frequency_sample)
+
+original_estimate <- min_function(frequency_sample)
+
+jk_dot <- mean(jk_result$jack.values)
+
+theta_jk <- n * original_estimate - (n - 1) * jk_dot
+theta_jk
+```
+The answers match.
+
+## (c) (Stat-627 only) Generalize the results. Assume a sample X1, . . . , Xn of size n, where X1, X2 are the smallest two observations. Also assume there is no tie. Derive the equation for the Jackknife estimator of the population minimum. Use your result in (a) to verify your formula.
+```{r}
+X <- c(102, 115, 127, 127, 162, 180, 184, 205, 239, 240)
+n <- length(X)
+
+sorted_X <- sort(X)
+X1 <- sorted_X[1]
+X2 <- sorted_X[2]
+
+theta_jk_general <- ((2*n - 1)/n) * X1 - ((n - 1)/n) * X2
+theta_jk_general
+```
+This result matches the result from 1a.
+
+# 2 Ex.5.4.9. Bootstrap the mean of median house values in the Boston dataset. (p. 223, 10 pts): We will now consider the Boston housing data set from the {MASS} library.
+```{r}
+library(MASS)
+library(boot)
+data(Boston)
+str(Boston)
+head(Boston)
+```
+
+## (a) In this data set, variable medv is the median value of owner-occupied homes in $1,000s. Based on the Boston data set, provide an estimate for the population mean µ of medv. Call this estimate µ^.
+```{r}
+µ_hat <- mean(Boston$medv)
+µ_hat
+```
+The estimate on the median home value in the Boston data set is $22,533 
+
+## (b) Estimate the standard error of µ^ (as we know, StdError(x¯) = s/√n, where s is the sample standard deviation. R function sd().)
+```{r}
+n <- nrow(Boston)
+s <- sd(Boston$medv)
+std_error <- s / sqrt(n)
+std_error
+```
+The standard error estimate of µ_hat is 0.4088611.
+
+## (c) Estimate the standard error of µ^ using the bootstrap method. How does this compare to your answer from (b)?. Remember to set your seed to be reproducible.
+```{r}
+set.seed(123)
+
+mean_function <- function(data, indices) {
+  return(mean(data[indices], na.rm = TRUE))
+}
+
+boot_result <- boot::boot(data = Boston$medv, statistic = mean_function, R = 10000)
+bootstrap_se <- sd(boot_result$t)
+bootstrap_se
+```
+The answer from the bootstrap method is 0.4088195, while the previous answer was slightly higher at 0.4088611.
+
+## (d) Based on your bootstrap estimate from (c), provide a 95% confidence interval for µ. A popular approximation is µˆ±2StdError(µˆ). Compare it to the results obtained using an R command t.test(Boston$medv).
+```{r}
+µ_hat - 2 * bootstrap_se
+µ_hat + 2 * bootstrap_se
+ 
+quantile(boot_result$t, probs = c(0.025, 0.975))
+```
+
+```{r}
+t.test(Boston$medv)$conf.int
+```
+The bootstrap 95% confidence interval is [21.715, 23.35], which is very similar to the t-test result of [21.72953, 23.33608].
+
+## (e) Now, estimate M, the population median of medv with the sample median M^ .
+```{r}
+M_hat <- median(Boston$medv)
+M_hat
+```
+The population median of medv is 21.2
+
+## (f) We now would like to estimate the standard error of Mˆ , but unfortunately, there is no simple formula for computing the standard error of a sample median. Instead, estimate this standard error using the bootstrap method.
+```{r}
+median_function <- function(data, indices) {
+  return(median(data[indices], na.rm = TRUE))
+}
+
+set.seed(123)
+boot_median_result <- boot::boot(
+  data = Boston$medv, 
+  statistic = median_function, 
+  R = 10000)
+
+bootstrap_median_se <- sd(boot_median_result$t)
+bootstrap_median_se
+```
+
+
+```{r}
+boot_median_ci <- boot.ci(boot_median_result, type = "perc")
+boot_median_ci
+```
+The standard error of M_hat is 0.3773774 and the confidence intervals are [20.5, 21.9]

@@ -1,0 +1,239 @@
+---
+title: "STAT615 HW2 - Langmeyer"
+author: "Alyssa Langmeyer"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    number_sections: false
+  word_document:
+    toc: true
+    toc_depth: 2
+    number_sections: false
+  html_document:
+    toc: true
+    toc_depth: '2'
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## 1. Problem 3.4 (c, d, h, plus revised part e below). Copier Maintenance (p. 147, 20pts)
+```{r}
+cm <- read.table("CH01PR20.txt", header=F) 
+colnames(cm) <- c("time", "copiers")
+cm.SLR<-lm(time ~ copiers, data=cm)
+cm.SLR
+```
+
+### c. Prepare a histogram plot of the residuals. Are there any noteworthy features in this plot?
+```{r}
+hist(cm.SLR$residuals)
+```
+
+Interpretation: The histogram shows that the distribution of the residuals is slightly skewed to the right but is broadly following traditional bell curve shape that is centered around 0.
+
+### d. Prepare residual plots of ei versus Y; and el versus Xi on separate graphs. Do these plots provide the same information? What departures from regression model (2.1) can be studied from these plots? State your findings.
+```{r}
+plot(cm.SLR$fitted.values, cm.SLR$residuals,
+     main = "Residuals vs Fitted Values")
+plot(cm$copiers, cm.SLR$residuals,
+     main = "Residuals vs Copiers")
+```
+- The first plots residuals vs fitted values, while the second plots residuals vs predictor values. Both have residuals on the y-axis but against different variables, which provides similar but not identical information. 
+
+- Both show random scatter around zero with no clear patterns, which suggests that the assumptions are met.
+
+### e. Prepare a normal probability plot of the residuals. Also obtain the coefficient of correlation between the ordered residuals and their expected values under normality. Does the normality assumption appear to be tenable here? Use Table B.6 and a = .10.
+```{r}
+qqnorm(cm.SLR$residuals)
+qqline(cm.SLR$residuals)
+```
+**Interpretation:** The plot shows that the data points pretty closely follow the line, implying that normality is tenable. There is greater deviations towards the left tail but they are not severe.
+
+```{r}
+shapiro.test(cm.SLR$residuals)
+```
+**Interpretation:** The test shows that the t-statistic =0.97583 and a p-value of 0.4614. Since p=0.4614 > alpha=0.1, it fails to reject the null hypothesis and there is no significant evidence that the residuals deviate from normality. 
+
+```{r}
+ordered_residuals <- sort(cm.SLR$residuals)
+n <- length(ordered_residuals)
+expected_values <- qnorm((1:n - 0.375)/(n + 0.25))
+cor(ordered_residuals, expected_values)
+```
+**Interpretation:** The correlation coefficient between the ordered residuals and their expected values under normality is -.9891, which as it is close to 1 supports the normality assumption. 
+
+### h. Information is given below on two variables not included in the regression model, namely, mean operational age of copiers serviced on the call (X2' in months) and years of experience of the service person making the call (X3 ). Plot the residuals against X2 and X3 on separate - graphs to ascertain whether the model can be improved by including either or both of these variables. What do you conclude?
+```{r}
+x2 <- c(20, 19, 27, 28, 26, 33) 
+x3 <- c(4, 5, 4, 3, 3, 6)
+par(mfrow=c(1,2))
+plot(x2, cm.SLR$residuals[1:6], 
+     main = "Residuals vs Copier Age")
+plot(x3, cm.SLR$residuals[1:6],
+     main = "Residuals vs Experience")
+```
+**Interpretation:** 
+- The residuals vs copier age plot shows no clear pattern, suggesting that adding this variable may not improve the model.
+
+- The residuals vs experience plot shows shows no clear pattern, suggesting that adding this variable may not improve the model.
+
+## 2. Following is the ANOVA table for the Copier Maintenance data we analyzed last time. 
+#### use the facts that: (a) SSPE = 2797.658, and (b) the predictor (Copier) has 10 distinct 2 values, to further develop the ANOVA table (see next page) so that we can conduct F-test for lack-of-fit. 
+Ho: The linear model is adequate
+Ha: The model is not adequate
+Rejection Rule:
+Conclusion:
+
+## 3. Problem 3.17(skip b). Sales growth. (p. 150, 25pts)
+
+### a. Prepare a scatter plot of the data. Does a linear relation appear adequate here?
+```{r}
+sales.growth <- data.frame(
+  xyear = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9),
+  ysales = c(98, 135, 162, 178, 221, 232, 283, 300, 374, 395)
+)
+plot(ysales ~ xyear, data = sales.growth)
+```
+**Interpretation:** The scatter plot shows a slight s-shaped variance curve along the line but the data largely do not stray far from the line. 
+
+###  c. Use the transformation Y' = ..JY and obtain the estimated linear regression function for the transformed data.
+```{r}
+sales.growth$sqrtY <- sqrt(sales.growth$ysales)
+sales.reg2 <- lm(sqrtY ~ xyear, data = sales.growth)
+summary(sales.reg2)
+```
+**Interpretation:**
+- The estimated slope is 1.07629 and the estimated intercept is 10.26093. 
+- New formula for the transformed data: Y = 10.26093 + (1.07629 * X)
+
+### d. Plot the estimated regression line and the transformed data. Does the regression line appear to be a good fit to the transformed data?
+```{r}
+plot(sqrtY ~ xyear, data = sales.growth)
+abline(sales.reg2$coef)
+```
+**Interpretation:**  The regression line fits the transformed data well, with points closely clustered around the line. This indicates that the model is a good fit for the data. 
+
+###  e. Obtain the residuals and plot them against the fitted values. Also prepare a normal probability plot. What do your plots show?
+```{r}
+plot(sales.reg2$fitted.values, sales.reg2$residuals)
+abline(0, 0)
+qqnorm(sales.reg2$residuals)
+qqline(sales.reg2$residuals)
+```
+**Interpretation:**
+- The residual plot shows random scatter around zero, indicating no major violations of linearity or constant variance. The lack of a significant pattern
+indicates that the requirements for a linear regression assumptions have been met.
+- The Q-Q plot shows slight deviations at the tails, but the residuals are approximately normal.
+
+###  f. Express the estimated regression function in the original units.
+Y = (10.26093 + 1.07629*X)^2
+
+## **The following 3 questions use Grocery Retailer data (CH06PR09.txt).**
+```{r}
+grocery<-read.table("CH06PR09.txt",header=FALSE)
+colnames(grocery) <- c("total.lh", "cases.shipped", "labor.hours", "holiday.indicator")
+head(grocery)
+```
+
+
+## 4. Problem 6.9. Grocery Retailer (p. 249, 15 pts.)
+
+### a. Prepare separate histogram plots for the number of cases shipped Xi I and the indirect cost of the total hours Xi2. Are there any outlying cases present? Are there any gaps in the data?
+```{r}
+par(mfrow = c(1, 2))
+hist(grocery$cases.shipped, main = "Cases Shipped", xlab = "Cases")
+hist(grocery$labor.hours, main = "Labor Hours", xlab = "Hours")
+```
+**Interpretation:** 
+-
+- Ther are gaps present in the cases shipped data between 300 and 400.
+
+### b. The cases are given in consecutive weeks. Prepare a time plot for each predictor variable. - What do the plots show?
+```{r}
+plot(grocery$cases.shipped, type = "l")
+plot(grocery$labor.hours, type = "l")
+plot(grocery$holiday.indicator, type = "l")
+```
+**Interpretation:**
+- The cases shipped shows spikes around the holidays and increasing variability over time
+- The labor hours shows no clear trend but notable spikes
+- the holiday indicator shows peaks around holiday weeks.
+
+### c. Obtain the scatter plot matrix and the correlation matrix. What information do these diagnostic aids provide here?
+```{r}
+pairs(grocery[, c("total.lh", "cases.shipped", "labor.hours", "holiday.indicator")])
+cor_matrix <- cor(grocery[, c("total.lh", "cases.shipped", "labor.hours", "holiday.indicator")])
+print(cor_matrix)
+```
+**Interpretation:** 
+- The matrix shows that the strongest relationship between the variables is between holiday.idicator and total.lh, which means that the variable holiday indicator has a strong positive linear relationship with the total labor hours worked. 
+- the correlation matrix confirms a very strong correlation of 0.81 between total,lh and holiday.indicatorm, while others are weaker.
+
+## 5. Problem 6.10. (a, b, c, d) (p. 249, 25 pts: a,b,d-5, c-10)
+
+### a. Fit regression model (6.5) to the data for three predictor variables. State the estimated regression function. How are bl , b2 , and b3 interpreted here?
+```{r}
+grocery.reg <- lm(total.lh ~ cases.shipped + labor.hours + holiday.indicator, data = grocery)
+summary(grocery.reg)
+```
+**estimated regression function:** total.lh = 4150 + 0.000787X1 - 13.17X2 + 623.6X3
+
+**interpretation:**
+- b_1 (cases.shipped): for each additional case shipped, total labor hours increased by 0.000787 hours
+- b_2 (labor.hours): each additional labor hour decreases total labor hours by 13.17
+- b_3 (holiday.indicator): holiday weeks have 523.6 more labor hours than non-holiday weeks.
+
+### b. Obtain the residuals and prepare a,box plot of the residuals. What information does this plot provide?
+```{r}
+boxplot(grocery.reg$residuals)
+```
+**interpretation:** This boxplopt shows that the median is below zero, which allows us to see that there is an uneven spread fo the dat, meaning that the residuals are not symmetrically distributed. The longer upper whisker shows the rightward skew.
+
+### c. Plot the residuals against Y, X I, X2 , X3, and X I X2 on separate graphs. Also prepare a normal probability plot. Interpret the plots and summarize your findings.
+```{r}
+par(mfrow = c(2, 3))
+plot(grocery.reg$fitted.values, grocery.reg$residuals)
+plot(grocery$cases.shipped, grocery.reg$residuals)
+plot(grocery$labor.hours, grocery.reg$residuals)
+plot(grocery$holiday.indicator, grocery.reg$residuals)
+plot(grocery$cases.shipped*grocery$labor.hours, grocery.reg$residuals)
+```
+**interpretation:** 
+- the fitted regression plot shows a strong gap in the data between 4450 and 4850. Most of the data points populate before 4450, indicating that the model is not constant.
+- this model 
+
+```{r}
+qqnorm(grocery.reg$residuals, main = "Normal Q-Q Plot")
+qqline(grocery.reg$residuals)
+```
+**interpretation:** This plot shows us the slight s-curve along the reference line, with slight deviation at the upper tail.
+
+### d. Prepare a time plot of the residuals. Is there any indication that the error terms are correlated? Discuss.
+```{r}
+plot(grocery.reg$residuals, type = "l")
+```
+there is no systemic patterns or cycles in the plot. There are random fluctuations around 0, which indicate that there no autocorrelation detected.
+
+## 6. Problem 6.11. (a, c) (p. 250, 10 pts.)
+
+### a. Test whether there is a regression relation, using level of significance .05. State the alternatives, decision rule, and conclusion. What does your test result imply about B1, B2, and B3? What is the P-value of the test?
+Ho: B1=B2=b3=0
+Ha: At least one Bj does not equal to 0 for j=1,2,3  
+Decision Rule: Reject Ho if p-value < alpha=0.05
+```{r}
+summary(grocery.reg)
+```
+
+
+### c. Calculate the coefficient of multiple determination R'l. How is this measmure interpl-eted hel-e?
+```{r}
+
+```
+
+** sorry about the incompletes, I came back from vacation with the flu so this is what I have finished through a fever, at this point I care more about getting some sleep and reviewing the correct answers for the midterm tomorrow when I hopefully feel a better. 

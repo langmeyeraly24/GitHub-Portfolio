@@ -1,0 +1,239 @@
+---
+title: "STAT627 Homework 3"
+author: "Alyssa Langmeyer"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: true
+    toc_depth: 2
+    number_sections: false
+  word_document:
+    toc: true
+    toc_depth: 2
+    number_sections: false
+  html_document:
+    toc: true
+    toc_depth: '2'
+    df_print: paged
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+---
+
+# 1. Ex.2.4.7. KNN Prediction (p.54. 8 pts.)
+The table below provides a training data set containing six observations, three predictors, and one qualitative response variable. Suppose we wish to use this data set to make a prediction for Y when X1 = X2 = X3 = 1 using K-nearest
+neighbors. Do this manually (no code) and show your work.
+
+## (a) Compute the Euclidean distance between each observation and the test point, X1 = X2 = X3 = 1.
+    - observation 1: distance = sqrt((x1_test - x1_obs)^2 + (x2_test - x2_obs)^2 + (x3_test - x3_obs)^2)
+    - observation 1: distance = sqrt((1 - 0)^2 + (1-3))^2 + (1 - 0)^2)
+    - observation 1: distance = sqrt(6)
+    
+    - observation 2: distance = sqrt((x1_test - x1_obs)^2 + (x2_test - x2_obs)^2 + (x3_test - x3_obs)^2)
+    - observation 2: distance = sqrt((1 - 2)^2 + (1 - 0)^2 + (1 - 0)^2)
+    - observation 2: distance = sqrt(3)
+    
+    - observation 3: distance = sqrt((x1_test - x1_obs)^2 + (x2_test - x2_obs)^2 + (x3_test - x3_obs)^2)
+    - observation 3: distance = sqrt((1 - 0)^2 + (1 - 1)^2 + (1 - 3)^2)
+    - observation 3: distance = sqrt(5)
+    
+    - observation 4: distance = sqrt((x1_test - x1_obs)^2 + (x2_test - x2_obs)^2 + (x3_test - x3_obs)^2)
+    - observation 4: distance = sqrt((1 - 0)^2 + (1 - 1)^2 + (1 - 2)^2)
+    - observation 4: distance = sqrt(2)
+    
+    - observation 5: distance = sqrt((x1_test - x1_obs)^2 + (x2_test - x2_obs)^2 + (x3_test - x3_obs)^2)
+    - observation 5: distance = sqrt((1 - (-1))^2 + (1 - 0)^2 + (1 - 1)^2)
+    - observation 5: distance = sqrt(5)
+    
+    - observation 6: distance = sqrt((x1_test - x1_obs)^2 + (x2_test - x2_obs)^2 + (x3_test - x3_obs)^2)
+    - observation 6: distance = sqrt((1 - 1)^2 + (1 - 1)^2 + (1 - 1)^2)
+    - observation 6: distance = 0
+    
+## (b) What is our prediction with k = 1? Why?
+    - When k=1, the calculated distances show that observation 6 has a distance of 0, which is exactly the test point. This makes it the closest neighbor, and with the response value of Y=RED, the prediction for the test point is red.
+
+## (c) What is our prediction with k = 3? Why?
+    - when k=3, the three closest observations to (1,1,1) are
+      - Obs 6: distance =0, Y=RED
+      - Obs 4: distance = sqrt(2), Y=GREEN
+      - Obs 2: distnace = sqrt(3, Y=RED)
+    - The majority is RED, so the prediction to the test point is RED.
+
+    
+## (d) In classification problems, the “decision boundaries” separate different response categories in the space of the predictors. If the decision boundary in this problem is highly nonlinear, would we expect the best value for k to be large or small? Why? (Hint: Will “nonlinear boundary’ ’ need a less flexible or more flexible approach?)
+  If the decision boundary is highly nonlinear, we would expect the best value for k to be small because a small k means that the prediction is based on only a few neighbors, which allows the boundary to listen to the very local patterns, allowing it to be very flexible. and as a high k model is based on many neighbors and is more likely to be simple and straight or gently curved, ei more linear and less flexible. 
+
+# 2. Ex.4.8.13.(with modification) Stock Market Prediction, part 1. KNN (p. 192, 16 or 12 pts.)
+We want to predict the behavior of the stock market in the following week. The Weekly data set, (from the {ISLR2} package), contains 1,089 observations with the following 9 variables.
+- Year: The year that the observation was recorded
+- Lag1: Percentage return for previous week
+- Lag2: Percentage return for 2 weeks previous
+- Lag3: Percentage return for 3 weeks previous
+- Lag4: Percentage return for 4 weeks previous
+- Lag5: Percentage return for 5 weeks previous
+- Volume: Volume of shares traded (average number of daily shares traded in billions)
+- Today: Percentage return for this week
+- Direction: A factor with levels Down and Up indicating whether the market had a positive or negative return on a given week
+
+## (a) Produce some numerical and graphical summaries of the Weekly data. Do there appear to be any patterns?
+```{r}
+library(tidyverse)
+library(class)
+library(ISLR2)
+data(Weekly)
+summary(Weekly)
+pairs(Weekly)
+```
+Patterns
+- The most noticeable pattern is the strong positive relationship between Year and Volume
+- The mean of Today (0.1499) is positive, indicating an overall upward trend in the market
+- The distribution of returns is roughly symmetric but with heavy tails 
+- All lag variables show very similar distributions, suggesting they may be highly correlated with each other
+
+## (b) Split the data set into training and testing data. Set the random seed as 1235, and use split percentage of 70% for training. (With over 1000 observations, the 70-30 split leaves at least 300 for testing. The split percentage is good.) Then, use the KNN method with K = 9 to predict Direction as the response based on the five lag variables plus Volume as predictors.
+
+```{r}
+set.seed(1235)
+train_index <- sample(1:nrow(Weekly), size = 0.7 * nrow(Weekly))
+train_data <- Weekly[train_index, ]  
+test_data <- Weekly[-train_index, ] 
+predictors <- c("Lag1", "Lag2", "Lag3", "Lag4", "Lag5", "Volume")
+train_X <- train_data[, predictors]
+test_X <- test_data[, predictors]
+train_Direction <- train_data$Direction
+test_Direction <- test_data$Direction
+knn_pred <- knn(train_X, test_X, train_Direction, k = 9)
+knn_pred
+```
+
+## (c) Compute the confusion matrix, showing cross-tabulation of the actual and predicted responses.
+```{r}
+confusion_matrix <- table(knn_pred, test_Direction)
+confusion_matrix
+```
+
+
+## (d) Compute the classification rate. Recall that the “classification rate’ ’ is the overall fraction of correct predictions.
+Correct predictions = TN + TP 
+                    = 51 + 115 
+                    = 166
+
+Total predictions = 51 + 67 + 94 + 115 
+                  = 327
+
+Classification rate = 166/327 
+                    = 0.5076
+
+## (e) Tuning. Try different values of the tuning parameter K and select the optimal one; the one which minimizes the prediction error rate. Report the optimal K and the associated error rate. (Hint: set up a loop to try k = 1, 2, 3, · · · , 50. For each k, fit KNN model and save the classification rate (or the mis-classification rate).
+```{r}
+k_values <- 1:50
+error_rates <- numeric(length(k_values))
+
+for (i in seq_along(k_values)) {
+  k <- k_values[i]
+  knn_pred_temp <- knn(train_X, test_X, train_Direction, k = k)
+  cm_temp <- table(knn_pred_temp, test_Direction)
+  error_rates[i] <- 1 - sum(diag(cm_temp)) / sum(cm_temp)
+}
+
+optimal_k <- k_values[which.min(error_rates)]
+min_error_rate <- min(error_rates)
+
+plot(k_values, error_rates, type = "b", 
+     xlab = "K Value", ylab = "Error Rate",
+     main = "KNN Error Rate vs. K Value")
+points(optimal_k, min_error_rate, col = "yellow", pch = 19)
+abline(h = min_error_rate, col = "red", lty = 2)
+
+cat("Optimal K:", optimal_k, "\n")
+cat("Minimum Error Rate:", min_error_rate, "\n")
+```
+
+
+# 3. Ex.4.8.4. Curse of Dimensionality (Stat-627 only, p.189-190, 4 pts)
+When the number of features p is large, there tends to be a deterioration in the performance of KNN and other local approaches that perform prediction using only observations that are near the test observation for which a prediction must be made. This phenomenon is known as the curse of dimensionality, and it ties into the fact that non-parametric approaches often perform poorly when p is large. We will now investigate this curse.
+
+## (a) Suppose we have a set of observations, each with measurements on p = 1 feature, X. We assume that X is uniformly (evenly) distributed on [0, 1]. Associated with each observation is a response value. We wish to predict a test observation’s response using only observations that are within 10% of the range of X closest to that test observation. For instance, to predict the response for a test observation with X = 0.6, we will use observations in the range [0.55, 0.65].
+
+### On average, what fraction of the available observations will we use to make the prediction?
+0.1 (or 10%) as X is uniformly distributed on [0,1], the probability that any observation falls in an interval of length L is L. Here length = 0.1, so the fraction is 0.1
+
+## b) Now suppose we have a set of observations, each with measurements on p = 2 features, X1 and X2. We assume that (X1, X2) are uniformly distributed on [0, 1] × [0, 1] and are independent. We wish to predict a test observation’s response using only observations that are within 10% of the range of X1 and within 10% of the range of X2 closest to that test observation. For instance, to predict the response for a test observation with X1 = 0.6 and X2 = 0.35, we will use observations in the range [0.55, 0.65] for X1 and in the range [0.3, 0.4] for X2.
+
+### On average, what fraction of the available observations will we use to make the prediction?
+0.01 (or 1%) as the probability for X1 is 0.1, for X2 is 0.1, and since they're independent, the joint probability is 0.1 × 0.1 = 0.01.
+
+## (c) Now suppose we have a set of observations on p = 100 features. Again the observations are uniformly distributed on each feature, and each feature ranges in value from 0 to 1. We wish to predict a test observation’s response using observations within the 10% of each feature’s range that is closest to that test observation. What fraction of the available observations will we use to make the prediction?
+0.1^100 (or 10^-100) as with 100 independent dimensions, each requiring being within 10% of the range, the probability is 0.1 multiplied by itself 100 times.
+
+## (d) Using your answers to parts (a)-(c), argue that a drawback of KNN when p is large is there are very few training observations “near” any given test observation.
+KNN performs poorly in high dimensions because in high dimensions, the fraction of "nearby" points becomes extremely small, and as KNN relies on having training observations close to test observations but with very few points in the neighborhood, KNN either has to use points that are actually far away (not truly similar) or has no points to use for prediction.
+
+## (e) We wish to make a prediction for a test observation by creating a p-dimensional hypercube centered around the test observation that contains, on average, 10% of the training observations (for our variables that are i.i.d. Uniform (0, 1)). For p = 1, 2, and 100, What is the length of each side of the hypercube? Comment on your answer. 
+### Note: A hypercube is a generalization of a cube to an arbitrary number of dimensions. When p = 1, a hypercube is simply a line segment, when p = 2 it is a square, and when p = 100 it is a 100-dimensional cube
+p = 1: L = 0.1
+p = 2: L = sqrt(0.1) = 0.316
+p = 100: L = 0.1^(1/100) = 0.977
+
+# 4 Ex.4.8.9. What are the Odds? (p.191, 4 pts)
+
+## (a) On average, what fraction of people with an odds of 0.33 of defaulting on their credit card payment will in fact default?
+p = odds / 1 + odds
+p = .33 / 1 + .44
+p = .248 = 24.8%
+
+## (b) Suppose an individual has a 10% chance of defaulting on her credit card payment. What are the odds they will default?
+p = odds / 1 + odds
+P = .1 / 1 + .1
+p = 0.0909 = 9.09%
+
+# 5 Ex. 4.8.6. What does it take to get an A? (p.191, 4 pts)
+Suppose we collect data on a group of students in a undergraduate statistics class using the following variables:
+• X1: hours studied
+• X2: undergrad GPA, and
+• Y : receive an A (1) or Not an A (0).
+We fit a logistic regression and produce estimated coefficients,
+• beta0 = −6, beta1 = 0.05, and beta2 = 1.
+
+## (a) Estimate the probability a student who studies for 40 hours and has an undergrad GPA of 3.5 gets an A in the class.
+z = beta0 + (beta1 * x1) + (beta2 * x2)
+z = -6 + (0.05 * 40) + (1 * 3.5)
+z = -0.5
+
+p = e^z / (1 + e^z)
+p = e^0.5 / (1 + e^.5)
+p = 0.6065 / 1 + 0.6065
+p = 0.378
+p = 37.8%
+
+## (b) How many hours would the student in part (a) need to study to have a 50% (predicted) chance of getting an A in the class?
+z = beta0 + (beta1 * x1) + (beta2 * x2)
+z = -6  (.05 * hours) + (1 * 3.5)
+z = -6 + (0.05 * hours) + 3.5
+0 = -2.5 + (0.05 * hours)
+hours = 50
+
+# 6.  Ex.4.8.13.(with modification) Stock Market Prediction. Logistic Regression (p.192, 10 pts). (This question will be in HW 4. You can start early though.)
+We want to predict the behavior of the stock market in the following week. The Weekly data set, (from the {ISLR2} package), contains 1,089 observations with the following 9 variables.
+• Year: The year that the observation was recorded
+• Lag1: Percentage return for previous week
+• Lag2: Percentage return for 2 weeks previous
+• Lag3: Percentage return for 3 weeks previous
+• Lag4: Percentage return for 4 weeks previous
+• Lag5: Percentage return for 5 weeks previous
+• Volume: Volume of shares traded (average number of daily shares traded in billions)
+• Today: Percentage return for this week
+• Direction: A factor with levels Down and Up indicating whether the market had a positive or negative
+return on a given week
+
+## (a) Perform a logistic regression with Directionas the response and the five lag variables plus Volume as predictors. Do any of the predictors appear to be statistically significant? If so, which ones?
+
+## (b) Compute the confusion matrix and overall fraction of correct predictions. Explain what the confusion matrix is telling you about the types of mistakes made by the logistic regression model.
+
+## (c) Fit a logistic regression model with Lag2 as the only predictor using as training data the period from 1990 to 2008. Compute the confusion matrix and the overall fraction of correct predictions for the held out test data (that is the data from 2009, and 2010). How does it compare to before? What does that suggest?
+
+## (d) Plot an ROC curve for the logistic regression on the test data from (c), using different probability thresholds and add an diagonal line for FPR = TPR. Interpret the plot in terms of how useful the model might be?

@@ -1,0 +1,47 @@
+---
+title: "STAT615 HW2 - Langmeyer"
+author: "Alyssa Langmeyer"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    number_sections: false
+  word_document:
+    toc: true
+    toc_depth: 2
+    number_sections: false
+  html_document:
+    toc: true
+    toc_depth: '2'
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+# 1. Problem 4.7. Copier maintenance (p. 172, 20 pts. a-10, b-5, c-5)
+```{r}
+cm<-read.table("CHO1PR20.txt", header=F)
+colnames(cm)<-c("minute","copier")
+cm.slr<-lm(minute~copier,data=cm)
+```
+- function: totalminutes_hat = -0.58 + 15.03(copier)
+- the family confidence level is 0.9,
+
+# 2. Problem 6.11. (b) Grocery Retailer 
+
+# 3. Problem 6.12. Grocery Retailer 
+
+# 4. Problem 6.13. Grocery Retailer 
+
+# 5. Problem 7.5 (b, add part c)
+
+# 6. Problem 7.6
+
+# 7. Problem 7.9
+
+# 8. Problem 6.15.c

@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+shapefile_cache/
+.claude/
+~$*
+.Rhistory

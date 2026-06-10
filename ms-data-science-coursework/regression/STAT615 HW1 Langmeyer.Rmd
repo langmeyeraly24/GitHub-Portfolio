@@ -1,0 +1,269 @@
+---
+title: "Stat-415/615 Regression HW1"
+author: "Alyssa Langmeyer"
+date: "5/21/25"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    number_sections: false
+  word_document:
+    toc: true
+    toc_depth: 2
+    number_sections: false
+  html_document:
+    toc: true
+    toc_depth: '2'
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. Problem 1.20  (10 pts)
+
+```{r}
+# Load data
+cm <- read.table("CH01PR20.txt", header=F) 
+colnames(cm) <- c("time", "copiers")
+head(cm, 3)
+tail(cm, 2)
+```
+
+### Graphical summary (optional, not part of HW)
+
+```{r}
+hist(cm$time)
+hist(cm$copiers)
+plot(time ~ copiers, data=cm)
+```
+
+**Summary**
+
+- The histrograms show that the service4 time in the data set is roughly uniformly distrubuted. There is no obvious outliers.
+
+- the number of copiers in the data set has a distribution skewed to the right with one mode around 1-2 and a second mode around 4-5.There is no obvious outliers.
+
+- the scatterplot shows that there is a strong positive linear association between the variables. The variation in the response (Y, service time) appears to be constant. There is no obvious outliers
+
+### a. Estimated regression function 
+
+```{r}
+cm.SLR<-lm(time ~ copiers, data=cm)
+cm.SLR
+```
+
+The estimated regression line (function) is: time_hat = -0.58 + 15.04*(copiers)
+
+
+### b. Plot data with regression line
+
+```{r}
+plot(time ~ copiers, data=cm)
+abline(cm.SLR$coefficients)
+```
+
+The above plot shows the estimated SLR fits the data well.
+
+### c. Interpret the intercept
+
+As shown in the output in part (a), the estimated regression function (aka. regression line) is: time_hat = -0.58 + 15.04*(copiers)
+
+- The estimated intercept is -0.57. When is 0 copiers (X=0), the mean service time is estimated to be -0.58 minutes. In this problem, this number does not provide relevant information. 
+
+- The estimated slope is 15.04. For every additional copier, the mean service time is estimated to increase (as it is a pos. slope) 15.04 minutes.
+
+### d. Predict y at x = 5.
+
+time_hat = -0.58 + 15.04*(copiers)
+time_hat = -0.58 + 15.04*(5)
+time_hat = 74.62
+
+For 5 copiers, the mean service time is 74.6 mins
+
+```{r}
+predict(cm.SLR, newdata=data.frame(copiers=5))
+```
+
+## 2. Problem 1.24 (5 pts)
+
+### A. Residuals and Sum of the squared residuals
+
+```{r}
+cm.SLR$residuals[1:5] 
+sum((cm.SLR$residuals)^2)
+```
+
+- The summary of the squared residuals is 3416.3777. Since we used the Lease Squares Estimate. 3416.3777 is the minimum value of Q in Equation (1.8)
+
+### B. Estimate $\sigma^2$ and $\sigma$.
+
+sigma^2_hat = sum(residual^2)/(n-2)
+sigma^2_hat = 3416.377/(45-2)
+sigma^2_hat = 79.45
+
+sigma_hat = sqrt(sigma^2_hat)
+sigma_hat = sqrt(79.45)
+sigma_hat = 8.91
+
+The standard deviation $\sigma$ has the same unit of measure as the residual and the response variable. In this case, $\sigma$ is expressed in "minutes".
+
+
+## Problem 2.5
+
+### A. Estimate the change in the mean service time when the number of copiers serviced increases by one. Use a 90 percent confidence interval. Interpret your confidence interval.
+
+```{r}
+cm.SLR<-lm(time ~ copiers, data=cm)
+cm.SLR
+```
+```{r}
+summary(cm.SLR)
+# b1 (est. slope) = 15.04
+# se(b1)=0.48
+# n (sample size) = 45
+# 90% -> alpha=0.1
+```
+```{r}
+tcrit<-qt(1-0.1/2,df=45-2)
+tcrit
+15.04 + c(-1,1)*tcrit*0.48
+```
+```{r}
+confint(cm.SLR,level=0.9)
+```
+Interpretation: at 90% confidence, the change in mean service time is estimated to be between 14.22 and 15.84 minutes for every additional copier.
+
+### B. Conduct a t test to determine whether or not there is a linear association between X and Y here; control the a risk at .10. State the alternatives, decision rule, and conclusion. What is the P-value of your test?
+Ho: beta1 = 0, no linear assoc. between X and Y
+Ha: beta1 DOESNOT= 0, linear assoc. between X and Y
+
+Decision Rule: Two-tailed test at alpha=0.10, in which we will reject Ho if the absolute value of the t-stat is > than t_crit
+
+T-Statistic = estimated slope / standard error of beta1
+T-Statistic = beta1/se(beta1)
+T-Statistic = 15.04/0.48
+T-Statistic = 31.33
+
+High t-value, indicates strong evidence against Ho.
+
+P-value:
+```{r}
+# 2 (both tails, Ha=two-tailed) * pt(x,df,)
+# 2* pt(31.33, (n-2))
+# 2* pt(31.33, (45-2))
+2 * pt(31.33, df = 43, lower.tail = FALSE)
+```
+
+Conclusion: We can reject Ho as there is overwhelming evidwnce that the number of copiers affects the service time.
+
+### C. Are your results in parts (a) and (b) consistent? Explain.
+
+The results are consistent because the Confidence Inervals excludes 0 and the t-test rejects Ho at alpha=0.10. They both confirm that the number of copiers significantly impacts gthe service time.
+
+### D. The manufacturer has suggested that the mean required time should not increase by more than 14 minutes for each additional copier that is serviced on a service call. Conduct a test to decide whether this standard is being satisfied by Tri-City. Control the risk of a Type I error at .05. State the alternatives, decision rule, and conclusion. What is the P-value of the test?
+Ho: beta1 = 14 (meet the standard)
+HA: beta1 > 14 (not meet the standard)
+
+tobs = beta1-(hypothesized value) / se(beta1)
+tobs = 15.04-14 / 0.48 
+tobs = -14.12667
+
+```{r}
+tobs<-15.04-14 / 0.48 
+tobs
+
+pval<- 1-pt(tobs,df=43)
+pval
+```
+p-value=0.05
+t-statistic=2.17
+
+We reject the null hypothesis as there is data to support the alternative, that Tri-city is not meeting the standard. The data provides sig evidence that the slope is greater than 14, e.i that the standard is not met. 
+
+## Problem 4: compare SPSS output to the R output in HW 1, 2, and 3 and match the results.
+I have learned how to read basic output for regression analysis in R and SPSS.
+
+## Problem 5: 2.14
+
+### A: Obtain a 90 percent confidence interval for the mean service time on calls in which six copiers are serviced. Interpret your confidence interval.
+```{r}
+cm.SLR <- lm(time ~ copiers, data = cm)
+summary(cm.SLR)
+```
+
+mean_time =  -0.5802 + 15.0352x6 
+mean_time = 89.631 minutes
+
+Interpretation: The estimated mean service time for 6 copiers is 89.63 minutes.
+
+```{r}
+predict(cm.SLR, newdata = data.frame(copiers = 6), interval = "confidence", level = 0.90)
+```
+Interpretation: The output tells us that we are 90% confident that the mean service time for 6 copiers is between 87.28 and 91.98 minutes. 
+
+### B: Obtain a 90 percent prediction interval for the service time on the next call in which six copiers are serviced. Is your prediction interval wider than the corresponding confidence interval in part (a)? Should it be?
+
+```{r}
+predict(cm.SLR, newdata = data.frame(copiers = 6), interval = "prediction", level = 0.90)
+```
+With 90% confidence, I predict that the service time for the next call for six copiers will fall betwen 74.46 and 104.80 minutes. This is wider than the confidence interval given in part 1 as the prediction intervals account for additional variability of observations around the mean.
+
+## Problem 6: 2.24
+
+### B: Conduct an F test to determine whether or not there is a linear association between time spent and number of copiers serviced; use a = .10. State the alternatives, decision rule, and conclusion.
+```{r}
+summary(cm.SLR)
+```
+
+Ho: beta1 = 0, no linear relationship
+Ha: beta1 DOESNOT= 0, linear relationship
+
+Decision Rule: We will reject Ho if the
+F-stat = 968.66
+
+```{r}
+qf(0.90, 1, 43)
+```
+
+Since 968.7 is greater than the critical value of 2.83, we reject Ho at alpha=0.10. The test shows a stat. sig. relationship between the # of copiers and service time.
+
+### C: By how much, relatively, is the total variation in number of minutes spent on a call- reduced when the number of copiers serviced is introduced into the analysis? Is this a relatively small or large reduction? What is the name of this measure?
+r^2 = SSR / SST
+r^2 = SSR / (SSR+SSE)
+r^2 = 7689.3 / (7689.3+3146)
+r^2 = 0.692
+r^2 = 69.2%
+
+69.2% of the total variation in service time is explained by the number of copiers serviced, which as it is a very large reduction, indicates a strong linear relationship.
+
+### D: Calculate r and attach the appropriate sign.
+r = sign(beta1_mean) * sqrt(r^2)
+r = sign(15.0352) * sqrt(0.692)
+r = +0.832
+
+```{r}
+cor(cm$time, cm$copiers)
+```
+
+
+## Problem 7: Review the example in Lab 1. R users see item 8 in RLab1_SLR.pdf; SPSS users see p.6 of Lab1_SLR.pdf. Practice drawing the “confidence interval band” and “prediction interval band” on the scatter plot with the regression line. Turn in a graph using Copier Maintenance data
+```{r}
+newx <- seq(0, max(cm$copiers)+1, by=0.1)
+
+cm.CI <- predict(cm.SLR,newdata=data.frame(copiers=newx), interval="confidence", level=0.95)
+cm.PI <- predict(cm.SLR,newdata=data.frame(copiers=newx), interval="prediction", level=0.95)
+
+plot(time ~ copiers, data=cm, ylim=c(min(cm.PI[,2]), max(cm.PI[,3])), pch=20)
+abline(cm.SLR$coef)
+
+lines(newx, cm.CI[,2], lty=2, col=2)
+lines(newx, cm.CI[,3], lty=2, col=2)  
+lines(newx, cm.PI[,2], lty=3, col=3)  
+lines(newx, cm.PI[,3], lty=3, col=3)
+```
+
+
+## Problem 8: I have read the assigned reading from Ch.2.3 and Ch.2.10
+

@@ -1,0 +1,208 @@
+---
+title: "STAT615 HW6 - Langmeyer"
+author: "Alyssa Langmeyer"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: true
+    toc_depth: 2
+    number_sections: false
+  word_document:
+    toc: true
+    toc_depth: 2
+    number_sections: false
+  html_document:
+    toc: true
+    toc_depth: '2'
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+***The following 2 questions use the Car Purchase data in Problem 14.13, p.627***
+
+```{r}
+cardata <- read.table("CH14PR13.txt")
+summary(cardata)
+head(cardata)
+```
+
+Car purchase. A marketing research firm was engaged by an automobile manufacturer to conduct a pilot study to examine the feasibility of using logistic regression for ascertaining the likelihood that a family will purchase a new car during the next year. A random sample of 33 suburban families was selected. Data on annual family income (XI' in thousand dollars) and the current age of the oldest family automobile (X2' in years) were obtained. A follow-up interview conducted 12 months later was used to determine whether the family actually purchased a new car (Y = 1) or did not purchase a new car (Y = 0) during the year. Multiple logistic regression model (14.41) with two predictor variables in first-order terms is assumed to be appropriate.
+
+# 1. Problem 14.13 (p.627. 15 pts)
+
+## a. Find the maximum likelihood estimates of f3o, f31, and f32. State the fitted response function.
+
+### please find examples of “fitted response function” from textbook Equations (14.28), (14.30), (14.35) on p. 565, 566, 570, respectively.
+
+```{r}
+# Y = Purchase (0/1), X1 = Income, X2 = Age of oldest car
+colnames(cardata) <- c("Y", "X1", "X2")  
+head(cardata)
+model <- glm(Y ~ X1 + X2, data = cardata, family = binomial)
+summary(model)
+```
+beta_0 (Intercept): -4.73931
+beta_1 (Income, X1): 0.06773
+beta_2 (Car Age, X2): 0.59863
+
+pi_hat = (-4.73931 + (0.06773 * X1) + (0.059863 * x2)) / (1 + e^(-4.73931 + 0.06773*X1 + 0.59863*X2))
+
+## b. Obtain exp(b1) and exp(hz) and interpret these numbers.
+```{r}
+exp_b1 <- exp(0.06773)
+exp_b1
+exp_b2 <- exp(0.59863)  
+exp_b2
+```
+
+- For every $1,000 increase in annual income, the odds of purchasing a car multiply by 1.070, holding car age constant.
+- For every additional year in the oldest car's age, the odds of purchasing a car multiply by 1.820, holding income constant
+
+## c. What is the estimated probability that a family with annual income of $50 thousand and an oldest car of 3 years will purchase a new car next year?
+
+### In part (c), plug the x-values (x1 = 50, x2 = 3) into the fitted response function in part (a). Then you can find the estimated probability
+
+```{r}
+eta_hat <- -4.73931 + 0.06773*50 + 0.59863*3
+pi_hat <- exp(eta_hat)/(1 + exp(eta_hat))
+pi_hat
+```
+
+Correct Answer: The estimated probability is 0.6090
+
+# 2. Problem 14.19 (a, b) (p.629. 10 pts + 10 extra)
+
+***Refer to Car purchase Problem 14.13. Assume that the fitted model is appropriate and that large-sample inferences are applicable.***
+
+## a. Obtain joint confidence intervals for the family income odds ratio exp(20_Beta_1) for families whose incomes differ by 20 thousand dollars and for the age of the oldest family automobile odds ratio exp(2_beta_2) for families whose oldest automobiles differ in age by 2 years, with family confidence coefficient of approximately .90. Interpret your intervals.
+
+### in part (a), use Bonferroni adjustment for the joint confidence intervals
+```{r}
+model <- glm(Y ~ X1 + X2, data = cardata, family = binomial)
+
+confint_adj <- confint(model, level = 1 - 0.10/2) 
+
+income_or <- exp(20 * coef(model)["X1"])
+income_ci <- exp(20 * confint(model, parm = "X1", level = 1 - 0.10/2))
+
+age_or <- exp(2 * coef(model)["X2"])
+age_ci <- exp(2 * confint(model, parm = "X2", level = 1 - 0.10/2))
+
+results <- list(
+  Income_OR = c(
+    Lower = income_ci[1],
+    Upper = income_ci[2]
+  ),
+  CarAge_OR = c(
+    Lower = age_ci[1],
+    Upper = age_ci[2]
+  )
+)
+
+results
+```
+
+## b. Use the Wald test to determine whether X2 , age of oldest family automobile, can be dropped from the regression model; use a = .05. State the alternatives, decision rule, and conclusion. What is the approximate P -value of the test?
+
+### In part (b), the “Wald test” is to use the Standard Normal (Z) distribution for the test.
+
+Ho:Beta_two = 0 (X2 can be dropped from the model)
+Ha:Beta_two does not equal 0 (X2 should remain in the model)
+
+Decision Rule: reject H₀ if the p-value ≤ 0.05
+
+Estimate for X2 (beta^2)) = 0.59863
+Standard error for X2 (SE(beta^2)) = 0.28360
+
+Ward test statistic: Z = beta^2 / SE(beta^2)
+Ward test statistic: Z = 0.59863 / 0.28360
+Ward test statistic: Z = 2.110825
+
+```{r}
+p_value <- 2 * pnorm(-abs(2.111))
+p_value
+```
+
+Since 0.0348 < 0.05, we reject Ho.
+
+
+# You can work on part (c) and (d) for extra credit. (10 pts)
+
+## c. Use the likelihood ratio test to determine whether X2, age of oldest family automobile, can be dropped from the regression model; use a = .05. State the full and reduced models, decision rule, and  conclusion. What is the approximate P-value of the test? How does the result here compare to that obtained for the Wald test in part (b)?
+
+Full Model: Y ~ X1 + X2 (both income and age)
+```{r}
+full_model <- glm(Y ~ X1 + X2, data = cardata, family = binomial)
+full_model
+```
+Reduced Model: Y ~ X1 (without age)
+```{r}
+reduced_model <- glm(Y ~ X1, data = cardata, family = binomial)
+reduced_model
+```
+
+Ho: beta_two = 0 (reduced model adequate)
+Ha: beta_two does not equal 0 (need full model)
+Reject Ho if G^2 > X^2 (1, 0.95) = 3.841 or p < 0.05
+
+```{r}
+deviance_full <- deviance(full_model)
+deviance_full
+deviance_reduced <- deviance(reduced_model)
+deviance_reduced
+# 39.30454 - 36.68963 = 2.614905
+```
+
+```{r}
+G2 <- deviance_reduced - deviance_full
+G2
+df_test <- df.residual(reduced_model) - df.residual(full_model)
+```
+```{r}
+p_value_LRT <- 1 - pchisq(G2, df = df_test)
+p_value_LRT
+```
+
+Fail to reject Ho because 2.615 < 3.841 and p-value = 0.106 > 0.05
+
+## d. Use the likelihood ratio test to determine whether the following three second-order terms, the square of annual family income, the square of age of oldest automobile, and the two-factor interaction effect between annual family income and age of oldest automobile, should be added simultaneously to the regression model containing family income and age of oldest automobile as first-order terms; use a = .05. State the full and reduced models, decision rule, and conclusion. What is the approximate P-value of the test?
+
+Ho: beta_3 = beta_4 = beta_5 = 0
+Ha: at least one second order term is needed
+
+Full Model: Y ~ X1 + X2 + I(X1^2) + I(X2^2) + X1:X2 // First-order + second-order terms
+Reduced Model: Y ~ X1 + X2 // First-order terms only
+
+Reject Ho if G^2 > X^2(3, 0.95) = 7.815 or if p-value < 0.05
+
+```{r}
+reduced_model <- glm(Y ~ X1 + X2, data = cardata, family = binomial)
+full_model_quad <- glm(Y ~ X1 + X2 + I(X1^2) + I(X2^2) + X1:X2, 
+                      data = cardata, family = binomial)
+```
+
+```{r}
+deviance_reduced <- deviance(reduced_model)  
+deviance_reduced
+deviance_full <- deviance(full_model_quad)
+deviance_full
+G2 <- deviance_reduced - deviance_full
+G2
+```
+
+```{r}
+df_test <- df.residual(reduced_model) - df.residual(full_model_quad)
+df_test
+```
+
+```{r}
+p_value_LRT <- 1 - pchisq(G2, df = df_test)
+p_value_LRT
+```
+
+Fails to reject null, which suggests second-order terms are not needed

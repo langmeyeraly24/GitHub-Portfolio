@@ -1,0 +1,330 @@
+---
+title: "STAT627 Homework 5"
+author: "Alyssa Langmeyer"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: true
+    toc_depth: 2
+    number_sections: false
+  word_document:
+    toc: true
+    toc_depth: 2
+    number_sections: false
+  html_document:
+    toc: true
+    toc_depth: '2'
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+```{r}
+library(class)
+library(boot)
+library(ISLR2)
+```
+
+$5\neq 4$
+
+# 1 Predicting a grade (CV in KNN) (6 pts)
+Answer sub-questions (a) and (b) by hand calculation. A student wants to predict their grade for the Statistical Machine Learning course, using the KNN algorithm with K = 3. Six friends who took the course last year had the following mid-term test scores and grades
+
+Estimate the prediction error rate of the algorithm, by means of:
+
+## (a) The validation-set method. Use Friends 2, 3, 4, 5 as the training data, and use Friends 1, 6 as the testing data.
+*Friend 1:* Score = 90 
+- Friend 2 (88): 90 - 88 = 2
+- Friend 3 (83): 90 - 83 = 7
+- Friend 4 (78): 90 - 78 = 12
+- Friend 5 (85): 90 - 85 = 5
+Nearest neighbors: Friends 2, 5, and 3
+Majority = A
+Prediction = A
+Actual grade = A
+Prediction correct
+
+*Friend 2:* Score = 84
+- Friend 2 (88): 84-88 = 4
+- Friend 3 (83): 84-83 = 1
+- Friend 4 (78): 84-78 = 6
+- Friend 5 (85): 84-85 = 1
+Nearest neighbors: Friends 3, 5, 2
+Majority = A
+Prediction = A
+Prediction incorrect
+
+error rate = (number of incorrect predictions) / (total test obersvations)
+error rate = 1 /2
+error rate = 50%
+
+The estimated prediction error rate using the validation set method is 50%
+
+## (b) The leave-one-out cross-validation method.
+*Leave out Friend 1* (Score=90, Actual=A)
+Training Set: Friends 2, 3, 4, 5, 6 (Scores: 88, 83, 78, 85, 84)
+- Friend 2 (88): 90-88 = 2
+- Friend 3 (83): 90-80 = 7
+- Friend 4 (78): 90-78 = 12
+- Friend 5 (85): 90-85 = 5
+- Friend 6 (84): 90-84 = 6
+Nearest neighbors: Friends 2, 5, 6
+Votes: A (F2), B (F5), B (F6)
+Majority = B
+Prediction = B
+Actual grade = A
+Prediction Incorrect
+
+*Leave out Friend 2* (Score=88, Actual=A)
+Training Set: Friends 1, 3, 4, 5, 6 (Scores: 90, 83, 78, 85, 84)
+- Friend 1 (90): 88-90 = 2
+- Friend 3 (83): 88-83 = 5
+- Friend 4 (78): 88-78 = 10
+- Friend 5 (85): 88-80 = 3
+- Friend 6 (84): 88-84 = 4
+Nearest neighbors: Friends 1, 5, 6
+Votes: A (F1), B (F5), B (F6)
+Majority = B
+Prediction = B
+Actual grade = A
+Prediction Incorrect
+
+*Leave out Friend 3* (Score=83, Actual=A)
+Training Set: Friends 1, 2, 4, 5, 6 (Scores: 90, 88, 78, 85, 84)
+- Friend 1 (90): 83-90 = 7
+- Friend 2 (88): 83-88 = 5
+- Friend 4 (78): 83-78 = 5
+- Friend 5 (85): 83-85 = 2
+- Friend 6 (84): 83-84 = 1
+Nearest neighbors: Friends 6, 5, 2
+Votes: B (F6), B (F5), A (F2)
+Majority = B
+Prediction = B
+Actual grade = A
+Prediction Incorrect
+
+*Leave out Friend 4* (Score=78, Actual=B)
+Training Set: Friends 1, 2, 3, 5, 6 (Scores: 90, 88, 83, 85, 84)
+- Friend 1 (90): 78-90 = 12
+- Friend 2 (88): 78-88 = 10
+- Friend 3 (83): 78-80 = 5
+- Friend 5 (85): 78-85 = 7
+- Friend 6 (84): 78-84 = 6
+Nearest neighbors: Friends 3, 6, 5
+Votes: A (F3), B (F6), B (F5)
+Majority = B
+Prediction = B
+Actual grade = B
+Prediction Correct
+
+*Leave out Friend 5* (Score=85, Actual=B)
+Training Set: Friends 1, 2, 3, 4, 6 (Scores: 90, 88, 83, 78, 84)
+- Friend 1 (90): |85-90| = 5
+- Friend 2 (88): |85-88| = 3
+- Friend 3 (83): |85-83| = 2
+- Friend 4 (78): |85-78| = 7
+- Friend 6 (84): |85-84| = 1
+Nearest neighbors: Friends 6, 3, 2
+Votes: B (F6), A (F3), A (F2)
+Majority = A
+Prediction = A
+Actual grade = B
+Prediction Incorrect
+
+*Leave out Friend 6* (Score=84, Actual=B)
+Training Set: Friends 1, 2, 3, 4, 5 (Scores: 90, 88, 83, 78, 85)
+- Friend 1 (90): 84-90 = 6
+- Friend 2 (88): 84-88 = 4
+- Friend 3 (83): 84-83 = 1
+- Friend 4 (78): 84-78 = 6
+- Friend 5 (85): 84-85 = 1
+Nearest neighbors: Friends 3, 5, 2
+Votes: A (F3), B (F5), A (F2)
+Majority = A
+Prediction = A
+Actual grade = B
+Prediction Incorrect
+
+*LOOCV Error Rate Calculation:*
+Total incorrect predictions: 5 
+Total iterations: 6
+LOOCV error rate = 5 / 6  
+LOOCV error rate = 0.8333 
+LOOCV error rate = 83.33%
+
+The estimated prediction error rate using the leave-one-out cross-validation method is 83.33%.
+
+## (c) (Stat 627) Use knn.cv() function in package class to confirm your computation in (b). (You can start with reading the help file of knn.cv().)
+```{r}
+midterm_scores <- c(90, 88, 83, 78, 85, 84)
+course_grades <- c('A', 'A', 'A', 'B', 'B', 'B')
+grade_data <- data.frame(score = midterm_scores, grade = course_grades)
+
+loocv_predictions <- knn.cv(train = data.frame(score = midterm_scores), 
+                            cl = course_grades, 
+                            k = 3)
+print(loocv_predictions)
+```
+```{r}
+correct_predictions <- (loocv_predictions == course_grades)
+error_rate <- mean(!correct_predictions)
+print(error_rate)
+```
+
+
+# 2 Ex.5.4.8. Cross-validation in linear regression on simulated data (p.222, 223, 10 pts.)
+
+## (a) Generate a simulated data set as follows:
+```{r}
+set.seed(1)
+x <- rnorm (100)
+y <- x - 2*x^2 + rnorm(100)
+sim.df <- data.frame(x, y) # data.frame will be helpful in part (b), (c)
+```
+### In this data set, what is n and p? 
+n = 100
+p = 1
+
+### Write out the model used to generate the data in equation form. 
+Y = X − (2X^2) + error, where error ~ N(0,1)
+
+### Plot the data and interpret the plot
+```{r}
+plot(x, y, main = "Scatterplot of 2a", pch = 16, col = "pink")
+```
+The data here follows a clear, inverted U-Shape that makes a parabolic curve. The dots are not randomly scattered, there is a visible nonlinear relationship. This suggestds that a linear model would be a poor fit - it would be better to use a quadratic model.
+
+## (b) Compute the LOOCV estimates of prediction error that result from fitting each of the following four regression models: (Hints: (1) LOOCV is the same as K-fold CV with K=(sample size). (2) Function glm( ..., family=gaussian, ...) fits Normal linear regression (just like lm()). (3). Function cv.glm() in package boot\ conducts cross-validation for the output objects from glm().)
+```{r}
+glm.fit1 <- glm(y ~ x, data = sim.df)
+glm.fit2 <- glm(y ~ x + I(x^2), data = sim.df)
+glm.fit3 <- glm(y ~ x + I(x^2) + I(x^3), data = sim.df)
+glm.fit4 <- glm(y ~ x + I(x^2) + I(x^3) + I(x^4), data = sim.df)
+
+cv.error1 <- cv.glm(sim.df, glm.fit1)
+cv.error2 <- cv.glm(sim.df, glm.fit2)
+cv.error3 <- cv.glm(sim.df, glm.fit3)
+cv.error4 <- cv.glm(sim.df, glm.fit4)
+
+loocv_errors <- c(cv.error1$delta[1],
+                  cv.error2$delta[1],
+                  cv.error3$delta[1],
+                  cv.error4$delta[1])
+
+names(loocv_errors) <- c("Linear", "Quadratic", "Cubic", "Quartic")
+print(loocv_errors)
+```
+
+
+# (c) Which of these models have the smallest adjusted prediction mean squared error as estimated by LOOCV? Is this what you expected? Explain your answer.
+The model witth the smallest LOOCV error is the quadratic model, which makes sense as the data was generated from a quadratic process that was seen in 2a. The linear model is too simple and under fits the data, which results in the high error rate. the cubic and quartic models are too complex, causing them to overfit to the data. 
+
+## (d) Repeat step b but with K = 10-Fold validation and compare the prediction mean squared error. What do you notice compared to LOOCV?
+• Use set.seed(12) before each cv.glm() call.
+```{r}
+set.seed(12)
+
+cv.error1.10 <- cv.glm(sim.df, glm.fit1, K = 10)
+cv.error2.10 <- cv.glm(sim.df, glm.fit2, K = 10)
+cv.error3.10 <- cv.glm(sim.df, glm.fit3, K = 10)
+cv.error4.10 <- cv.glm(sim.df, glm.fit4, K = 10)
+
+kfold_errors <- c(cv.error1.10$delta[1],
+                  cv.error2.10$delta[1],
+                  cv.error3.10$delta[1],
+                  cv.error4.10$delta[1])
+
+names(kfold_errors) <- c("Linear", "Quadratic", "Cubic", "Quartic")
+
+comparison <- data.frame(
+  Model = names(loocv_errors),
+  LOOCV_MSE = loocv_errors,
+  KFold_MSE = kfold_errors
+)
+print(comparison)
+```
+
+
+## (e) (Stat-627) In part (c) (LOOCV), we did not use set.seed(). In part (d) (10-fold CV), we used set.seed(). The random seed is set so that we can get replicate the the same results for our homework practice. Why is the random seed relevant in the 10-fold CV but not in LOOCV?
+The random seed is relevant in the 10-fold CV and not in LOOCV because in LOOCV, each observation serves as its own validation set exactly once. As there is no random sampling involved, the results are the same regardless of random seed.
+
+
+# 3 Ex.5.4.5. Predicting defaults on loans (p.220, 221, 12 pts)
+Use the Default data set in {ISLR2} package to create a logistic regression model for predicting the probability of variable default based on predictors income, balance, and student. 
+
+Use each of the following methods to estimate the test error rate of the logistic regression model and decide whether it will be improved if the dummy variable student is excluded from the prediction.
+• Use a seed of 123 and a threshold of .5 where appropriate.
+
+## (a) The validation set approach with a 60% split. I.e. split the data set only once, 60% of the observation will be used for training, and the the remaining 40% will be used for validation/testing.
+```{r}
+set.seed(123)
+
+n <- nrow(Default)
+train_indices <- sample(n, size = round(0.6 * n))
+train_data <- Default[train_indices, ]
+test_data <- Default[-train_indices, ]
+
+glm_full <- glm(default ~ income + balance + student, 
+                data = train_data, family = binomial)
+glm_reduced <- glm(default ~ income + balance, 
+                   data = train_data, family = binomial)
+
+prob_full <- predict(glm_full, test_data, type = "response")
+prob_reduced <- predict(glm_reduced, test_data, type = "response")
+
+pred_full <- ifelse(prob_full > 0.5, "Yes", "No")
+pred_reduced <- ifelse(prob_reduced > 0.5, "Yes", "No")
+
+true_default <- test_data$default
+error_full <- mean(pred_full != true_default)
+error_reduced <- mean(pred_reduced != true_default)
+
+print(error_full)
+print(error_reduced)
+```
+The full model error rate is 26.5% and the reduced model error rate is 26.25%.
+
+## (b) Leave-one-out cross-validation. (Your computer may take a really long time to run the code on LOOCCV due to the large sample size. Considering using a chunk option for cache, e.g., set {r, cache=TRUE}.)
+```{r, eval = FALSE}
+glm_full_loocv <- glm(default ~ income + balance + student, 
+                      data = Default, family = binomial)
+cv_full <- cv.glm(Default, glm_full_loocv)
+error_full_loocv <- cv_full$delta[1]
+
+glm_reduced_loocv <- glm(default ~ income + balance, 
+                         data = Default, family = binomial)
+cv_reduced <- cv.glm(Default, glm_reduced_loocv)
+error_reduced_loocv <- cv_reduced$delta[1]
+
+print(error_full_loocv)
+print(error_reduced_loocv)
+```
+The LOOCV full model error is 2.139% and the LOOCV reduced model error is 21.46%.
+
+## (c) K-fold cross-validation for K = 100 and K = 1000.
+```{r, eval = FALSE}
+set.seed(123)
+cv_full_100 <- cv.glm(Default, glm_full_loocv, K = 100)
+cv_reduced_100 <- cv.glm(Default, glm_reduced_loocv, K = 100)
+
+set.seed(123)
+cv_full_1000 <- cv.glm(Default, glm_full_loocv, K = 1000)
+cv_reduced_1000 <- cv.glm(Default, glm_reduced_loocv, K = 1000)
+
+kfold_results <- data.frame(
+  Model = c("Full", "Reduced"),
+  K100 = c(cv_full_100$delta[1], cv_reduced_100$delta[1]),
+  K1000 = c(cv_full_1000$delta[1], cv_reduced_1000$delta[1])
+)
+print(kfold_results)
+```
+
+
+# 4 Cross-validation in LDA and QDA. (2 pts)
+
+## Refer to the Lab(s). Find the example(s) of cross-validation in LDA and QDA. Is it LOOCV or K-fold CV?
+There is an example in Lab 4: Next topic: cross-validation. It is LOOCV because, as the lab states, "A Leave-One-Out cross-validation (LOOCV) algorithm is used in lda() and qda() with CV=TRUE."

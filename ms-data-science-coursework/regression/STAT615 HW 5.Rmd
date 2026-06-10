@@ -1,0 +1,388 @@
+---
+title: "STAT615 HW5 - Langmeyer"
+author: "Alyssa Langmeyer"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: true
+    toc_depth: 2
+    number_sections: false
+  word_document:
+    toc: true
+    toc_depth: 2
+    number_sections: false
+  html_document:
+    toc: true
+    toc_depth: '2'
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# The following 3 questions use the Patient Satisfaction data set from Problem 6.15, p.250
+
+## A hospital administrator wished to study the relation between patient satisfaction (Y) and patient's age (X I, in years), severity of illness (X2, an index), and anxiety level (X3 , an index). The administrator randomly selected 46 patients and collected the data presented below, where larger values of Y, X2 , and X3 are, respectively, associated with more satisfaction, increased severity of illness, and more anxiety.
+
+```{r}
+patient_sat_data <- read.table("CH06PR15.txt")
+summary(patient_sat_data)
+head(patient_sat_data)
+```
+
+# 1. Problem 10.7 (p.414, 10 pts, 5 pts/part)
+
+## Refer to Patient satisfaction Problem 6.15c: Fit regression model (6.5) for three predictor variables to the data and state the estimated regression function. How is b2 interpreted here?
+
+(Age = X1, Severity = X2, Anxiety = X3)
+```{r}
+model <- lm(V4 ~ V2 + V3 + V1, data = patient_sat_data)
+summary(model)
+```
+Estimated Regression Function: 
+  y_hat = 1.053 + 0.0019X1 + 0.0301X2 - 0.0059X3
+  y_hat = 1.053 + 0.0019(age) + 0.0301(seversity) - 0.0059(anxiety)
+  
+R^2 = 0.5415: The predictors explain 54.15% of variance in satisfaction.
+p = 3.04x(10^-7) : there is strong evidence against null model.
+
+**Interpretation:** for each 1 unit increase in the severity index, patient satisfaction increases by 0.0301 units, if age and anxiety hold constant. Higher severity is associated with higher satisfaction, which may indicate confounding or other data limitations.
+
+### a. Prepare an added-variable plot for each of the predictor variables.
+```{r}
+library(car)
+avPlots(model, 
+        terms = ~ V2 + V3 + V1,
+        main = "Added-Variable Plots for Patient Satisfaction",
+        ylab = "Satisfaction (V4 | others)")
+```
+
+
+### b. Do your plots in pan (a) suggest that the regression relationships in the fitted regression function in Problem 6.15a are inappropriate for any of the predictor vaLiables? Explain.
+
+The plots suggest that Age (V2) is inappropriate for inclusion as there is no linear relationship. Severity (V3) and Anxiety (V1) are generally appropriate but we should investigate outlines.
+
+
+# 2. Problem 10.11(skip e) (p.415, 25 pts, 5 pts/part)
+
+## Refer to Patient satisfaction Problem 6.15.
+
+### a. Obtain the studentized deleted residuals and identify any outlying observations. Use the Bonferroni outlier test procedure with alpha = .10. State the decision rule and conclusion.
+n = 46
+adjusted alpha = 0.10/46 = 0.00217
+p = 3
+critical value: qt((1 - α*/2), df = (n - p - 2))
+critical value: qt((1 - 0.00217/46 ,df=46−3−2))
+critical value: qt(0.9989, 41)
+critical value: 3.09
+
+**Decision Rule:** An observation is an outlier if its absolute studentized deleted residual exceeds 3.09.
+
+```{r}
+model <- lm(V4 ~ V2 + V3 + V1, data = patient_sat_data)
+stud_del_resid <- rstudent(model) # studentized deleted residuals
+stud_del_resid
+```
+```{r}
+outliers <- which(abs(stud_del_resid) > 3.09)
+outliers
+```
+```{r}
+p_values <- 2 * pt(-abs(stud_del_resid), df = 41)
+p_values
+```
+```{r}
+bonferroni_outliers <- which(p_values < 0.10 / 46)
+bonferroni_outliers
+```
+
+**Conclusion:** Using the Bonferroni-adjusted outlier test with alpha = 0.10, no observations meet the threshold for statistical significance as all studentized deleted residuals < 3.09 and all p-values > 0.00217. 
+
+### b. Obtain the diagonal elements of the hat matrix. Identify any outlying X observations.
+
+```{r}
+leverage <- hatvalues(model)
+threshold <- 2 * 4 / 46
+high_leverage <- which(leverage > threshold)
+high_leverage
+leverage[high_leverage]
+```
+
+Two observations (9 and 31) were identified as having high leverage, with values exceeding the threshold of 0.1739. 
+
+### c. Hospital management wishes to esIimate mean patient satisfaction for patients who are XI = 30 years old, whose index of illness severity is X2 = 58, and whose index of anxiety level is X, = 2.0. Use (10.29) to determine whether this estimate will involve a hidden extrapolation
+```{r}
+new_data <- data.frame(V2 = 30, V3 = 58, V1 = 2.0)
+X <- model.matrix(model)  # Design matrix for original data
+X
+```
+```{r}
+new_X <- model.matrix(~ V2 + V3 + V1, data = new_data)  # Design matrix for new data
+new_X
+```
+
+```{r}
+leverage_new <- new_X %*% solve(t(X) %*% X) %*% t(new_X)
+leverage_new 
+```
+Leverage for new observation: 1.080
+Average leverage (p/n): 4/46 = 0.087
+Threshold for concern: > 2*(p/n) = 0.174
+
+**Interpretation:** For the new observation (Age = 30, Severity = 58, Anxiety = 2.0), the leverage value of 1.08 is very high (when the warning threshold is 0.174), which indicates that this predication represents a hidden extrapolation. 
+
+### d. The three largest absolute studentized deleted residuals are for cases 11, 17, and 27. Obtain the DFFITS, DFBETAS, and Cook's distance values for this case to assess its influence. What do you conclude?
+```{r}
+infl <- influence.measures(model)
+infl$infmat[c(11,17,27), c("dffit", "dfb.V2", "dfb.V3", "dfb.V1", "cook.d")]
+```
+DFFITS: 2*sqrt(p/n) = 0.589 -> All values < 0.589 so there is no strong overall influence on predictions 
+
+DFBETAS: 2/sqrt(n) = 0.295 
+  Case 11: Anxiety (V1) (0.383 > 0.295)
+  Case 17: Severity (V3) (0.319 > 0.295)
+  Case 27: Age (V2) (0.400 > 0.295)
+
+Cook's D: qf(0.5, p, n-p) = qf(0.5, 4, 42) = 0.88 
+  All values under 0.08, far below 0.88 threshold.
+  
+The three patients/cases in question have some influence on the results (case 11 affects anxiety a bit and case 27 the age estimate), but none of them require removal as all Cook's distances and DFFITS values remain below the critical thresholds. 
+
+### e. Calculate the average absolute percent difference in the fitted values with and without each of these cases. What does this measure indicate about the influence of each of these cases?
+```{r}
+original_fitted <- fitted(model)
+avg_percent_diff <- sapply(c(11, 17, 27), function(i) {
+# Refit model without case i
+model_without_i <- lm(V4 ~ V2 + V3 + V1, data = patient_sat_data[-i, ])
+# new predictions for original data (including case i)
+new_fitted <- predict(model_without_i, newdata = patient_sat_data)
+# Absolute percent difference for all observations
+abs_diff <- abs(original_fitted - new_fitted) / original_fitted * 100
+# Return average across all observations
+mean(abs_diff, na.rm = TRUE)
+})
+
+names(avg_percent_diff) <- c("Case 11", "Case 17", "Case 27")
+avg_percent_diff
+```
+These cases cause less than 1% difference in predictions when removed, which is very small. 
+
+### f. Calculate Cook's distance D; for each case and prepare an index plot. Are ally cases inl1uential according to this measure?
+```{r}
+cook_d <- cooks.distance(model)
+cook_d
+```
+```{r}
+influential_cases <- which(cook_d > 0.88)
+influential_cases
+```
+```{r}
+plot(cook_d, 
+     ylab = "Cook's Distance (D_i)", 
+     main = "Influence Check: Cook's Distance",
+     pch = 19, col = "steelblue")
+abline(h = 0.88, col = "red", lty = 2)  # Threshold line
+```
+No observations exceed the Cook's distance threshold of 0.88, including cases 11, 17, and 27.
+
+
+# 3. Problem 10.17 (p.417, 10 pts, 5 pts/part)
+
+## Refer to Patient satisfaction Problem 6.15b: Obtain the scatter plot matrix and the correlation matrix. Interpret these and state your principal findings.
+```{r}
+pairs(~ V4 + V2 + V3 + V1, data = patient_sat_data)
+```
+**Interpretation:** 
+Satisfaction (V4) vs. Age (V2):
+  - Moderate positive trend (older patients tend to report higher satisfaction).
+  - Some variability, but generally increasing.
+Satisfaction (V4) vs. Severity (V3):
+ - Stronger positive trend.
+Satisfaction (V4) vs. Anxiety (V1):
+  - Clear negative trend (higher anxiety linked to lower satisfaction).
+  - Strong linearity, suggesting anxiety is a key predictor.
+Age (V2) vs. Anxiety (V1):
+ - Strong negative correlation (younger patients report higher anxiety).
+ 
+```{r}
+cor_matrix <- cor(patient_sat_data[, c("V4", "V2", "V3", "V1")])
+round(cor_matrix, 2)
+```
+Satisfaction (V4) Correlations:
+  - Strongest predictor: Severity (V3, r* = 0.67).
+  - Anxiety (V1) has a strong negative effect (r* = -0.64).
+  - Age (V2) has a moderate positive effect (r* = 0.57).
+
+Multicollinearity Concerns:
+  - Age (V2) and Anxiety (V1) are highly correlated (r* = -0.79).
+
+Severity (V3) vs. Anxiety (V1):
+ - Moderate negative correlation (*r* = -0.60).
+ - Sicker patients tend to have slightly lower anxiety 
+ 
+### a. What do the scatter plot matrix and the correlation matrix show about pairwise linear associations among the predictor variables?
+
+The scatter plot and correlation matrix reveal that patient satisfaction is the most strongly associated with illness severity (positive) and anxiety (negative). Age is moderately correlated with satisfaction but highly collinear with anxiety, which suggests that it may not add unique predictive power.
+
+### b. Obtain the three variance inflation factors. What do these results suggest about the effects of multicollinearity here? Are these results more revealing than those in part (a)?
+```{r}
+vif_values <- vif(model)
+vif_values
+```
+Age (V2): 2.72
+Severity (V3): 1.63
+Anxiety (V1): 2.90
+
+The VIFs indicate mild multicollinearity, with the highest values for Age (2.72) and Anxiety (2.90), which is consistent with their strong correlation (r* = -0.79). However, since all VIFs are below 5, multicollinearity is not severe enough to warrant removing variables. 
+
+# 4. Problem 12.6. Copier Maintenance. (p. 502, 10 pts. 5pts DW test, 5 pts for plot and comments.)
+```{r}
+copier<-read.table("CH01PR20.txt",col.names = c("minutes", "copiers"))
+```
+
+## Refer to Copier maintenance Problem 1.20: 
+The Tri-City Office Equipment Corporation sells an imported copier on a franchise basis and performs preventive maintenance and repair service on this copier. The data below have been collected from 45 recent calls on users to perform routine preventive maintenance service; for each call, X is the number of copiers serviced and Y is the total number of minutes spent by the service person. Assume that first-order regression model (1.1) is appropriate.
+
+### The observations are listed in time order. Assume that regression model (12.1) is appropriate. Test whether or not positive autocorrelation is present: use alpha = .01. State the alternatives, decision rule, and conclusion.
+Ho: No autocorrelation (ρ = 0)
+Ha: Positive autocorrelation (ρ > 0)
+
+```{r}
+model <- lm(minutes ~ copiers, data = copier)
+library(lmtest)
+dw_test <- dwtest(model, alternative = "greater")
+dw_test
+```
+**Interpretation:** The Durbin-Watson statistic (DW = 2.40, p = 0.909) indicates no significant positive autocorrelation at α = 0.01.
+
+### In addition, plot the residuals in a sequence plot (It is also the time plot since the observations are organized in time order.) and comment.
+```{r}
+plot(residuals(model), 
+     type = "o",  
+     pch = 19,    
+     col = "blue",
+     xlab = "Time Order",
+     ylab = "Residuals",
+     main = "Residuals vs. Time Sequence")
+abline(h = 0, col = "red", lty = 2)
+```
+**Interpretation:** The residual sequence plot shows no pronounced patterns. Combined with the high p-value (0.909), I can conclude residuals are independent over time.
+
+# 5. Problem 11.7 (skip b) (Machine Speed, p. 473) a-g (except b), 30 pts
+
+## Machine speed. The number of defective items produced by a machine (Y) is known to be linearly related to the speed setting of the machine (X). The data below were collected from recent quality control records.
+```{r}
+machine<-read.table("CH11PR07.txt")
+summary(machine)
+```
+
+
+### a. Fit a linear regression function by ordinary least squares, obtain the residuals, and plot the residuals against X. What does the residual plot suggest?
+```{r}
+model <- lm(V1 ~ V2, data = machine)
+summary(model)
+```
+```{r}
+residuals <- resid(model)
+residuals
+```
+```{r}
+plot(machine$V2, residuals,
+     xlab = "Machine Speed (X)",
+     ylab = "Residuals",
+     main = "Residuals vs. Machine Speed",
+     pch = 19, col = "purple")
+abline(h = 0, col = "red", lty = 2)
+```
+**Interpretation:** The residual plot's vertical clustering (200/300/400) reveals that machine speed operates as a discrete variable  rather than a continuous one. This violates linear regression assumptions.
+
+### c. Plot the squared residuals against X. What does the plot suggest about the relation between the variance of the error term and X? 
+```{r}
+squared_resid <- residuals(model)^2
+plot(machine$V2, squared_resid,
+     xlab = "Machine Speed (X)",
+     ylab = "Squared Residuals",
+     main = "Squared Residuals vs. Machine Speed",
+     pch = 19, col = "purple")
+```
+**Interpretation:** The squared residuals plot shows clear increasing variance with machine speed, which indicates heteroscedasticity.
+
+### d. Estimate the variance function by regressing the squared residuals against-X, and then calculate the estimated weight for each case using (11.16b).
+Note that the predicted (fitted) values from “regressing the squared residuals against X” are the estimated variance of the residuals. The estimated weight is 1/(estimated variance). If you get a negative value for the estimated variance, convert it to a positive value by taking its absolute value.
+```{r}
+var_model <- lm(squared_resid ~ V2, data = machine)
+summary(var_model)
+```
+```{r}
+log_var_model <- lm(log(squared_resid) ~ V2, data = machine)
+log_var_model
+pred_var <- exp(predict(log_var_model))
+pred_var
+```
+```{r}
+weights <- (1 / pred_var) * length(pred_var) / sum(1 / pred_var)
+weights
+```
+
+```{r}
+wls_model <- lm(V1 ~ V2, data = machine, weights = weights)
+wls_model
+```
+
+### e. Using the estimated weights, obtain the weighted least squares estimates of beta_one and beta_one. Are the weighted least squares estimates similar to the ones obtained with ordinary least squares in part (a)?
+```{r}
+ols_coef <- coef(lm(V1 ~ V2, data = machine))  # beta_0 = -5.75, beta_one = 0.1875
+ols_coef
+wls_coef <- coef(wls_model)  # beta_0 = -6.40, beta_one = 0.190
+wls_coef
+```
+**Interpretation:** The weighted least squares estimates are similar to OLS for the slope (β1) but show an 11% lower intercept (β0), reflecting proper adjustment for heteroscedasticity while preserving the key speed-defect relationship
+
+### f. Compare the estimated standard deviations of the weighted least squares estimates bwo and bW1 in part (e) with those for the ordinary least squares estimates in part (a). What do you find?
+```{r}
+ols_se <- summary(lm(V1 ~ V2, data = machine))$coefficients[, 2]
+ols_se
+wls_se <- summary(wls_model)$coefficients[, 2]
+wls_se
+```
+- WLS cleaned up the intercept estimate a bit
+- Didn't really change what we think about speed's impact
+- Shows the speed-defect connection is reliable either way
+
+### g. Iterate the steps in parts (d) and (e) one more time. Is there a substantial change in the estimated regression coefficients? If so, what should you do?
+```{r}
+new_resid <- resid(wls_model)
+log_var_model2 <- lm(log(new_resid^2) ~ V2, data = machine)
+log_var_model2
+```
+
+```{r}
+new_weights <- (1 / exp(predict(log_var_model2))) * nrow(machine) / sum(1 / exp(predict(log_var_model2)))
+new_weights
+```
+```{r}
+wls_model2 <- lm(V1 ~ V2, data = machine, weights = new_weights)
+wls_model2
+```
+**Interpretation:** The coefficients changed negligibly (-6.40 -> -6.42 intercept, 0.1899 -> 0.190 slope) - less than 0.5% difference. Since the second  brought virtually no change, I should stick with the first WLS results and stop iterating further. The weights and estimates have effectively stabilized.
+
+
+# Extra credit: you may work on part (b) for extra credit. Please read text p.118, 119 for Breusch-Pagan test
+
+## b. Conduct the Breusch-Pagan test for constancy of the error variance, assigning log_e((o_2)^2) = Y0 + Y1X1; use alpha = .10. State the alternatives, decision rule, and conclusion.
+Ho:Error variance is constant (homoscedasticity)
+Ha:Error variance depends on machine speed (heteroscedasticity)
+
+```{r}
+library(lmtest)
+bp_test <- bptest(log(resid(model)^2) ~ V2, data = machine)
+bp_test
+```
+
+Decision Rule: Reject Ho if p-value < 0.10 or BP > 2.71
+
+
+**Interpretation:** The Breusch-Pagan test (BP=1.19, p=0.275) finds no significant evidence of non-constant variance at α=0.10
+

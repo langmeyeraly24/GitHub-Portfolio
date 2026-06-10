@@ -1,0 +1,373 @@
+---
+title: "Elaborating on models"
+format: html
+---
+
+```{r}
+#| output: false
+library(tidyverse)
+library(ExPanDaR) # for winsorizing/truncating
+library(lme4) #for random effects
+library(miceadds) # for lm.cluster
+
+library(readxl)
+
+```
+
+# Initial steps
+
+```{r}
+#robots_cleaned.csv is obtained by running the file "R/clean_and_truncate.R"
+#only step is to treat outliers
+robots <- read_csv("robots_cleaned.csv")
+```
+
+## On treating outliers
+
+Their wording is somewhat unclear. Their 99% tail truncation seems to apply only to Quality. It also appears to be censoring rather than truncating the data.
+
+```{r}
+robots2 <- read_excel("datas002.xlsx")
+
+#
+robots2$quality_original <- robots2$Quality
+robots2$quality_trunc <- treat_outliers(robots2$Quality, truncate = TRUE)
+robots2$quality_censored <- treat_outliers(robots2$Quality)
+
+robots2 <- robots2 %>% select(quality_censored, quality_trunc, quality_original)
+
+
+selected_variables <- robots2 %>%
+  select(quality_censored, quality_original, quality_trunc)
+#get summary statistics
+mapply(FUN = \(x) c(N = sum(!is.na(x)), mean = mean(x, na.rm =TRUE), 
+                    sd = sd(x, na.rm =TRUE), min = min(x, na.rm =TRUE), 
+                    max = max(x, na.rm =TRUE)),
+       selected_variables) %>%
+  t()
+
+
+```
+
+By censoring (professor's term) or winsorizing (package's term) the Quality variable, we were able to replicate their summary statistics.
+
+```{r}
+#select relevant columns
+selected_variables <- robots %>%
+  select(Quality, Robot, age, gender, marriage, health, lnGDP, structure, lnaverwage)
+#get summary statistics
+mapply(FUN = \(x) c(N = length(x), mean = mean(x), sd = sd(x), min = min(x), max = max(x)),
+       selected_variables) %>%
+  t()
+```
+
+```{r}
+# summary statistics for selected variables
+library(tidyverse)
+selected_variables <- robots %>%
+  select(Quality, Robot, age, gender, marriage, health, lnGDP, structure, lnaverwage)
+
+summary_table <- mapply(
+  FUN = \(x) c(
+    N = length(x), 
+    Mean = mean(x), 
+    SD = sd(x), 
+    Min = min(x), 
+    Max = max(x)
+  ),
+  selected_variables
+) %>% 
+  t() %>% 
+  round(3)
+
+colnames(summary_table) <- c("N", "Mean", "SD", "Min", "Max")
+summary_table
+```
+
+
+# Base models
+
+2 main concepts here
+
+-   Random fixed and mixed effects models
+
+    -   We did all 3, they have the mixed effects model duplicated in columns 1 and 3
+    -   lme4::lmer (package::function)
+    -   Random effects: for the region, individual, and year variables, we are interested in the variance rather than the coefficients. Uses Maximum Likelihood Estimation rather than OLS
+    -   Fixed effects are what we've been doing in class
+    -   I can probably elaborate verbally on why we don't do individual fixed effects for the model. It didn't quite match their results either, and it took 20+ minutes to run, and the model object was almost a gigabyte. Most individuals are only in there once, so it was a factor with about 13000 levels, creating about 13000 dummy variables, most of which correspond to only one observation.
+
+-   Robust standard error, clustered by individual
+
+    -   miceadds::lm.cluster
+
+They use robust standard error for all models. We only use it for the fixed effects models (difficult to combine two different methods).
+
+They determine with the Hausman test that the fixed effects model is best, so they use fixed effects for the rest of the paper. We do the same, but do not perform the Hausman test.
+
+## Mixed effects model (column 1)
+
+```{r}
+me_model <- lmer(data = robots, formula = Quality ~ Robot + age + gender + marriage + health + lnGDP
+     + structure + lnaverwage + as.factor(year)+ as.factor(province) + (1|id))
+summary(me_model)
+```
+
+## Fixed effects model (column 2)
+
+```{r}
+fe_model <- lm.cluster(data = robots, formula = Quality ~ Robot + age + gender + marriage + health + lnGDP
+                     + structure + lnaverwage + as.factor(year) + as.factor(province), cluster = "id")
+summary(fe_model)
+
+```
+
+## Random effects model (column 3)
+
+Note: in the paper, column 3 is the same as column 1, but the text indicates that it should be the random effects model.
+
+```{r}
+re_model <- lmer(data = robots, formula = Quality ~ Robot + age + gender + marriage + health + lnGDP + structure + lnaverwage + (1|year) + (1|province) + (1|id))
+summary(re_model)
+```
+
+## Formatted Table 3
+```{r}
+library(tidyverse)
+library(lme4)
+library(miceadds)
+
+# 1. First ensure all models exist
+models_list <- list()
+
+if (exists("me_model")) models_list[["Mixed Effects"]] <- me_model
+if (exists("fe_model")) models_list[["Fixed Effects"]] <- fe_model
+if (exists("re_model")) models_list[["Random Effects"]] <- re_model
+
+# 2. Extract coefficients safely
+get_coefficients <- function(model) {
+  if (inherits(model, "lmerMod")) {
+    # For mixed/random effects models
+    coefs <- summary(model)$coefficients
+    data.frame(
+      Variable = rownames(coefs),
+      Estimate = coefs[,1],
+      Std_Error = coefs[,2],
+      stringsAsFactors = FALSE
+    )
+  } else {
+    # For fixed effects models with clustered SE
+    data.frame(
+      Variable = names(model$lm_res$coefficients),
+      Estimate = model$lm_res$coefficients,
+      Std_Error = sqrt(diag(model$vcov)),
+      stringsAsFactors = FALSE
+    )
+  }
+}
+
+all_coefs <- map_dfr(models_list, get_coefficients, .id = "Model")
+
+# 3. Clean and prepare the data
+variable_order <- c(
+  "Robot", "Age", "Gender", "Marriage", "Health",
+  "ln(GDP)", "Structure", "ln(Avg Wage)", "Intercept"
+)
+
+cleaned_coefs <- all_coefs %>%
+  mutate(
+    Variable = case_when(
+      Variable == "(Intercept)" ~ "Intercept",
+      Variable == "Robot" ~ "Robot",
+      Variable == "age" ~ "Age",
+      Variable == "gender" ~ "Gender",
+      Variable == "marriage" ~ "Marriage",
+      Variable == "health" ~ "Health",
+      Variable == "lnGDP" ~ "ln(GDP)",
+      Variable == "structure" ~ "Structure",
+      Variable == "lnaverwage" ~ "ln(Avg Wage)",
+      TRUE ~ Variable
+    )
+  ) %>%
+  filter(Variable %in% variable_order) %>%
+  mutate(Variable = factor(Variable, levels = variable_order))
+
+# 4. Create the final table
+estimate_rows <- cleaned_coefs %>%
+  select(-Std_Error) %>%
+  pivot_wider(
+    names_from = Model,
+    values_from = Estimate,
+    values_fn = list(Estimate = mean)
+  )
+
+se_rows <- cleaned_coefs %>%
+  select(-Estimate) %>%
+  pivot_wider(
+    names_from = Model,
+    values_from = Std_Error,
+    values_fn = list(Std_Error = mean)
+  )
+
+final_table <- bind_rows(
+  estimate_rows %>% mutate(Row_Type = "estimate"),
+  se_rows %>% mutate(Row_Type = "se")
+) %>%
+  arrange(Variable, Row_Type) %>%
+  mutate(
+    across(where(is.numeric), ~ ifelse(
+      Row_Type == "estimate",
+      sprintf("%.3f", .),
+      sprintf("(%.3f)", .)
+    )),
+    Variable = ifelse(Row_Type == "se", "", as.character(Variable))
+  ) %>%
+  select(-Row_Type)
+
+# Add fixed effects indicators
+fe_rows <- data.frame(
+  Variable = c("Region FE", "Year FE"),
+  stringsAsFactors = FALSE
+)
+
+for (model_name in names(models_list)) {
+  fe_rows[[model_name]] <- "Yes"
+}
+
+final_table <- bind_rows(final_table, fe_rows)
+
+# 5. Print the table
+knitr::kable(
+  final_table,
+  align = c("l", rep("r", length(models_list))),
+  col.names = c("Variable", names(models_list)),
+  caption = "Regression Results"
+)
+```
+
+
+# Tables 4 and 6
+
+We did not replicate these.
+
+They did several robustness tests including 2 stage linear regression and substituting several variables for table 4.
+
+For table 6, they used bootstrap.
+
+# Tables 5,7,8
+
+## Table 5: Heterogeneity
+
+```{r}
+#| output: false
+#Gender
+man <- filter(robots, gender == 1)
+woman <- filter(robots, gender ==0)
+
+#Education
+unique(robots$education)
+count(robots, education)
+690 + 4763 # 0 and 1 are primary
+# 2 is middle
+# 3 is university
+primary <- filter(robots, education == 0 | education ==1)
+middle <- filter(robots, education == 2)
+university <- filter(robots, education ==3)
+
+#Age groups
+age_1 <- filter(robots, age >= 17 & age <= 25)
+age_2 <- filter(robots, age >= 26 & age <= 35)
+
+# Regional employment
+large <- filter(robots, reg_labor > mean(reg_labor))
+small <- filter(robots, reg_labor <= mean(reg_labor))
+
+#temp
+
+
+fit_fe_model <- function(dataset){
+  model <- lm.cluster(data = dataset, formula = Quality ~ Robot + age + gender + marriage + health + lnGDP
+             + structure + lnaverwage + as.factor(year) + as.factor(province),
+             cluster = "id")
+  model_summary <- summary(model)
+  return(model_summary[2,1:4])
+}
+
+#fit_fe_model(large)
+tbl <- map(.x = list(man,woman,primary,middle,university,large,small), .f = fit_fe_model) %>%
+  data.frame()
+names(tbl) <- c("Man", "Woman", "Primary", "Middle", "University", "Large", "Small")
+
+rownames(tbl)[1] <- "Estimate (Robot)"
+```
+
+```{r}
+tbl5 <- as.data.frame(t(tbl))
+colnames(tbl5) <- c("Estimate", "Std_Error", "t_value", "p_value")
+tbl5$Group <- rownames(tbl5)
+tbl5 <- tbl5 %>%
+  select(Group, Estimate, Std_Error, t_value,  p_value) %>%
+  mutate(across(where(is.numeric), ~round(., 3)))   %>% t()
+ tbl5
+```
+
+## Table 7: Regulatory effect
+
+Modeled with interaction effects between policies and Robot variable.
+
+-   note to team members: I ran the models but did not format the tables to match
+
+```{r}
+library(miceadds)
+model.7.1 <- lm.cluster(data = robots, formula = Quality ~ Robot + Robot*reg_edu  + age + 
+                          gender + marriage + health + lnGDP + structure + lnaverwage + 
+                          as.factor(year) + as.factor(province), cluster = "id")
+summary(model.7.1)
+
+model.7.2 <- lm.cluster(data = robots, formula = Quality ~ Robot + Robot*skill  + age + 
+                          gender + marriage + health + lnGDP + structure + lnaverwage + 
+                          as.factor(year) + as.factor(province), cluster = "id")
+summary(model.7.2)
+
+model.7.3 <- lm.cluster(data = robots, formula = Quality ~ Robot + Robot*entrepreneurship  + age + 
+                          gender + marriage + health + lnGDP + structure + lnaverwage + 
+                          as.factor(year) + as.factor(province), cluster = "id")
+summary(model.7.3)
+```
+
+
+
+
+## Table 8: Effectiveness of employment promotion measures
+
+Also modeled with interaction effect between policies and Robot variable. They split the data by level of education.
+
+-   note to team members: I ran the models but did not format the tables to match
+
+```{r}
+primary <- filter(robots, education == 0 | education ==1)
+middle <- filter(robots, education == 2)
+university <- filter(robots, education ==3)
+
+
+fit_ed_model <- function(dataset){
+  model <- lm.cluster(data = dataset, formula = Quality ~ Robot + Robot*reg_edu + age + gender + marriage + health + lnGDP
+                      + structure + lnaverwage + as.factor(year) + as.factor(province),
+                      cluster = "id")
+  model_summary <- summary(model)
+  return(model)
+}
+
+fit_skill_model <- function(dataset){
+  model <- lm.cluster(data = dataset, formula = Quality ~ Robot + Robot*skill + age + gender + marriage + health + lnGDP
+                      + structure + lnaverwage + as.factor(year) + as.factor(province),
+                      cluster = "id")
+  model_summary <- summary(model)
+  return(model)
+}
+
+ed_models <- map(.f = fit_ed_model, .x = list(primary, middle, university))
+skill_models <-  map(.f = fit_skill_model, .x = list(primary, middle, university))
+
+
+```
