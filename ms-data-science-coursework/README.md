@@ -1,29 +1,82 @@
-# M.S. Data Science Coursework — American University
+# M.S. Data Science for Applied Public Policy — American University
 
-Selected work from my **M.S. in Data Science for Applied Public Policy** at American University, Washington D.C. (2025–2026). The program combines statistical methods, machine learning, and applied policy analysis.
+**Alyssa Langmeyer** | Washington, D.C. | [LinkedIn](https://www.linkedin.com/in/alyssa-langmeyer-79518617a/)  
+Graduating December 2026 · 3.50 GPA
 
 ---
 
-## Folders
+## About Me
 
-### `data-mining/` — CSC680: Data Mining (Python)
-In-class exercises applying core ML algorithms to a phishing website classification dataset. Each notebook covers one algorithm end-to-end: feature prep, model training, and evaluation.
+I came to data science from political science and policy — I have a B.A. in Political Science from UMass Dartmouth (concentrations in Pre-Law, International Relations, and International Security), and before graduate school I worked as a procurement buyer doing supplier analytics and database management for a contract manufacturer in robotics, semiconductors, and defense. I also organized for the 2024 election cycle in New Hampshire and with Vote Save America.
 
-- `linear_regression.ipynb`
-- `knn.ipynb` — K-Nearest Neighbors
-- `support_vector_machine.ipynb`
-- `decision_trees.ipynb`
-- `ensemble_learning.ipynb` — Random forests and bagging
-- `model_evaluation.ipynb` — Classification metrics, confusion matrices, ROC
+At American University, I'm pursuing an M.S. that sits at the intersection of statistical methods, machine learning, and applied public policy. Most of my analytical work is politically focused — voter targeting, media bias, political communication, and policy evaluation — but I've also built up a strong technical foundation in statistical modeling, machine learning, and data pipeline work in both Python and R.
 
-### `regression/` — STAT615: Regression Analysis (R)
-Homework assignments covering simple and multiple linear regression, diagnostics, transformations, and model selection. Written in R Markdown.
+Outside of data, I've spent 5+ years in management and 7+ years training and mentoring people across very different industries. I think that background makes me a better analyst — I'm used to translating technical findings for non-technical audiences and making data actionable.
 
-### `statistical-machine-learning/` — STAT627: Statistical Machine Learning (R)
-Homework assignments covering KNN, logistic regression, LDA/QDA, cross-validation, jackknife, and bootstrap methods. Written in R Markdown.
+---
 
-### `political-analysis/` — GOVT650: Political Analysis (Python)
-Introduction to quantitative methods in political science, including data manipulation and exploratory analysis of political datasets.
+## Coursework at American University
+
+All courses below are from my official AU transcript. Courses in Fall 2026 are currently in progress.
+
+---
+
+### Statistics & Machine Learning
+
+**STAT-614: Statistical Methods** · Spring 2025 · Grade: A-  
+Foundation course in applied statistics: probability distributions, hypothesis testing, confidence intervals, ANOVA, and chi-square tests. Emphasis on interpreting results and checking assumptions rather than just running tests.
+
+**STAT-615: Regression Analysis** · Summer 2025 · Grade: B  
+Simple and multiple linear regression, model diagnostics, residual analysis, transformations, multicollinearity, variable selection, and weighted least squares. Heavy use of R and R Markdown for all assignments.
+
+**STAT-627: Statistical Machine Learning** · Fall 2026 *(in progress)*  
+Supervised and unsupervised learning methods from a statistical perspective: KNN, logistic regression, linear and quadratic discriminant analysis, cross-validation, jackknife, and bootstrap resampling. All work in R.
+
+---
+
+### Data Science & Programming
+
+**DATA-612: Statistical Programming in R** · Spring 2025 · Grade: C+  
+Introduction to R for data analysis: data structures, tidyverse workflow, data wrangling and cleaning, visualization with ggplot2, and R Markdown reporting. First programming course in the program.
+
+**DATA-613: Data Science** · Fall 2025 · Grade: A-  
+Applied data science pipeline: data acquisition, cleaning, exploratory analysis, visualization, and communication. Covered web scraping, API integration, and building reproducible analytical workflows. Included Shiny app development and Quarto reporting.
+
+**CSC-680: Introduction to Data Mining** · Spring 2026 · Grade: A-  
+Core machine learning algorithms applied to real datasets: linear and logistic regression, K-nearest neighbors, support vector machines, decision trees, ensemble methods (random forests, bagging), dimensionality reduction (PCA, t-SNE), neural networks with Keras, NLP basics, clustering, and class imbalance techniques. All work in Python with scikit-learn.
+
+**DATA-793: Data Science Practicum** · Fall 2026 *(in progress)*  
+Capstone practicum working with an external partner organization on an applied data science project.
+
+---
+
+### Political Science & Policy
+
+**GOVT-650: Political Analysis** · Spring 2025 · Grade: A  
+Quantitative methods for political science research: research design, causal inference, measurement, and applied statistical analysis of political data. Introduction to Python for political analysis.
+
+**GOVT-620: Applied Politics & American Public Policy** · Fall 2025 · Grade: A-  
+The policy process, agenda setting, legislative dynamics, and how data and evidence are used (and misused) in American policymaking. Covered policy evaluation methods and public opinion analysis.
+
+**GOVT-641: Politics of Mass Communication** · Spring 2026 · Grade: A  
+Media systems, political communication, framing effects, agenda-setting theory, and the role of media in democratic politics. This course directly motivated my data mining final project on media bias detection — studying the theory alongside the technical analysis made for much stronger work.
+
+**GOVT-520: Campaign Management Institute** · Summer 2026 *(completed)*  
+Intensive training program run through AU's Center for Congressional and Presidential Studies, affiliated with the DCCC. Covered every component of a modern political campaign: targeting and voter file analysis, field organizing, fundraising, media buying (TV and radio), messaging strategy, and coalition building. My contribution was the voter targeting and media market analysis for a Georgia Senate race — see the [ga-senate-2026-targeting](https://github.com/langmeyeraly24/ga-senate-2026-targeting) repo.
+
+---
+
+## What's in This Repo
+
+Selected finished work from the courses above. Not all courses have publishable code — some were R Markdown reports submitted as PDFs, or policy analysis that lived in Word docs. Where there's clean, representative code, it's here.
+
+```
+ms-data-science-coursework/
+├── data-mining/              # CSC-680: Python notebooks (decision trees, SVM, KNN, etc.)
+├── regression/               # STAT-615: R Markdown homework files
+├── statistical-machine-learning/  # STAT-627: R Markdown homework files
+└── political-analysis/       # GOVT-650: Python notebook
+```
 
 ---
 
@@ -31,12 +84,6 @@ Introduction to quantitative methods in political science, including data manipu
 
 **Degree:** M.S. Data Science for Applied Public Policy  
 **School:** American University, School of Public Affairs  
-**Graduation:** December 2026  
-
-**Other courses completed (not shown here):**
-- DATA612: R Programming
-- DATA613: Data Science
-- STAT614: Statistical Methods
-- STAT616: Generalized Linear Models
-- STAT605: Survey Sampling
-- GIS / Spatial Analysis
+**Location:** Washington, D.C.  
+**Expected graduation:** December 2026  
+**Undergraduate:** B.A. Political Science, University of Massachusetts Dartmouth
