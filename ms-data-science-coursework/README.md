@@ -7,11 +7,11 @@ Graduating December 2026 · 3.50 GPA
 
 ## About Me
 
-I came to data science from political science and policy — I have a B.A. in Political Science from UMass Dartmouth (concentrations in Pre-Law, International Relations, and International Security), and before graduate school I worked as a procurement buyer doing supplier analytics and database management for a contract manufacturer in robotics, semiconductors, and defense. I also organized for the 2024 election cycle in New Hampshire and with Vote Save America.
+I came to data science from political science and policy. I have a B.A. in Political Science from UMass Dartmouth (concentrations in Pre-Law, International Relations, and International Security), and before graduate school I worked as a procurement buyer doing supplier analytics and database management for a contract manufacturer in robotics, semiconductors, and defense. I also organized for the 2024 election cycle in New Hampshire and with Vote Save America.
 
-At American University, I'm pursuing an M.S. that sits at the intersection of statistical methods, machine learning, and applied public policy. Most of my analytical work is politically focused — voter targeting, media bias, political communication, and policy evaluation — but I've also built up a strong technical foundation in statistical modeling, machine learning, and data pipeline work in both Python and R.
+At American University, I'm pursuing an M.S. that sits at the intersection of statistical methods, machine learning, and applied public policy. Most of my analytical work is politically focused: voter targeting, media bias, political communication, and policy evaluation. I've also built up a strong technical foundation in statistical modeling, machine learning, and data pipeline work in both Python and R.
 
-Outside of data, I've spent 5+ years in management and 7+ years training and mentoring people across very different industries. I think that background makes me a better analyst — I'm used to translating technical findings for non-technical audiences and making data actionable.
+Outside of data, I've spent 5+ years in management and 7+ years training and mentoring people across very different industries. I think that background makes me a better analyst. I'm used to translating technical findings for non-technical audiences and making data actionable.
 
 ---
 
@@ -20,9 +20,9 @@ Outside of data, I've spent 5+ years in management and 7+ years training and men
 **"Your Body, Their Data: Reproductive Surveillance and the Long Project of American Control"**  
 *The Public Purpose Journal*, Vol. XXIV, Spring 2026 · American University School of Public Affairs
 
-Peer-reviewed policy analysis arguing that the weaponization of reproductive health data after *Dobbs v. Jackson Women's Health Organization* is not a technological anomaly but the modern manifestation of a centuries-old project to regulate bodily autonomy — tracing a continuous line from antebellum reproductive control and eugenic sterilization to today's unregulated data broker industry and algorithmic inference. Analyzes case law, criminal prosecutions (including *Nebraska v. Burgess* and ICE smartwatch tracking of pregnant immigrants), and technical literature on re-identification risk. Draws on Foucauldian biopolitics, Dorothy Roberts's critical race feminist framework, and emerging digital privacy scholarship. Proposes the **Digital Bodyguard Act**: a prohibited-by-default federal standard for sensitive health data with FTC enforcement and a private right of action.
+Peer-reviewed policy analysis arguing that the weaponization of reproductive health data after *Dobbs v. Jackson Women's Health Organization* is not a technological anomaly but the modern manifestation of a centuries-old project to regulate bodily autonomy. Traces a continuous line from antebellum reproductive control and eugenic sterilization to today's unregulated data broker industry and algorithmic inference. Analyzes case law, criminal prosecutions (including *Nebraska v. Burgess* and ICE smartwatch tracking of pregnant immigrants), and technical literature on re-identification risk. Draws on Foucauldian biopolitics, Dorothy Roberts's critical race feminist framework, and emerging digital privacy scholarship. Proposes the **Digital Bodyguard Act**: a prohibited-by-default federal standard for sensitive health data with FTC enforcement and a private right of action.
 
-This paper grew directly out of work in **GOVT-641: Politics of Mass Communication** and **GOVT-620: Applied Politics & American Public Policy** — the combination of media framing theory and policy process analysis shaped both the argument and the proposal.
+This paper grew directly out of work in **GOVT-641: Politics of Mass Communication** and **GOVT-620: Applied Politics & American Public Policy**. The combination of media framing theory and policy process analysis shaped both the argument and the proposal.
 
 ---
 
@@ -70,16 +70,16 @@ Quantitative methods for political science research: research design, causal inf
 The policy process, agenda setting, legislative dynamics, and how data and evidence are used (and misused) in American policymaking. Covered policy evaluation methods and public opinion analysis.
 
 **GOVT-641: Politics of Mass Communication** · Spring 2026 · Grade: A  
-Media systems, political communication, framing effects, agenda-setting theory, and the role of media in democratic politics. This course directly motivated my data mining final project on media bias detection — studying the theory alongside the technical analysis made for much stronger work.
+Media systems, political communication, framing effects, agenda-setting theory, and the role of media in democratic politics. This course directly motivated my data mining final project on media bias detection. Studying the theory alongside the technical analysis made for much stronger work.
 
 **GOVT-520: Campaign Management Institute** · Summer 2026 *(completed)*  
-Intensive training program run through AU's Center for Congressional and Presidential Studies, affiliated with the DCCC. Covered every component of a modern political campaign: targeting and voter file analysis, field organizing, fundraising, media buying (TV and radio), messaging strategy, and coalition building. My contribution was the voter targeting and media market analysis for a Georgia Senate race — see the [ga-senate-2026-targeting](https://github.com/langmeyeraly24/ga-senate-2026-targeting) repo.
+Intensive training program run through AU's Center for Congressional and Presidential Studies, affiliated with the DCCC. Covered every component of a modern political campaign: targeting and voter file analysis, field organizing, fundraising, media buying (TV and radio), messaging strategy, and coalition building. My contribution was the voter targeting and media market analysis for a Georgia Senate race. See the [ga-senate-2026-targeting](https://github.com/langmeyeraly24/ga-senate-2026-targeting) repo.
 
 ---
 
 ## What's in This Repo
 
-Selected finished work from the courses above. Not all courses have publishable code — some were R Markdown reports submitted as PDFs, or policy analysis that lived in Word docs. Where there's clean, representative code, it's here.
+Selected finished work from the courses above. Not all courses have publishable code. Some were R Markdown reports submitted as PDFs, or policy analysis that lived in Word docs. Where there's clean, representative code, it's here.
 
 ```
 ms-data-science-coursework/
